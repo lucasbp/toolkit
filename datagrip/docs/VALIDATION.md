@@ -6,9 +6,9 @@ Revisão local executada em 2026-11-04. Alvo: DataGrip 2026.2.6.1, build 262.118
 
 88 testes passaram, zero falhas e zero erros. Além dos fluxos da versão anterior, há regressões para revisão de identidade e fechamento de conexão com resultado confirmado. A falha de fechamento não descarta senha gerada nem resultado da aplicação e não provoca repetição de mutações.
 
-A revisão substituiu a read action bloqueante por ReadAction.nonBlocking, com cancelamento cooperativo. A ação de tabela captura metadados sob read action em background e abre o console no EDT. Renderers de nomes de conexão/tabela tratam texto literalmente. O verificador passou sem usos de API depreciada antes do ajuste visual final; a pipeline verifica o pacote publicado novamente.
+A revisão substituiu a read action bloqueante por ReadAction.nonBlocking, com cancelamento cooperativo. A ação de tabela captura metadados sob read action em background e abre o console no EDT. Renderers de nomes de conexão/tabela tratam texto literalmente. O verificador passou sem usos de API depreciada, inclusive após a mudança para DialogWrapper; a pipeline verifica o pacote publicado novamente.
 
-O plugin foi carregado em uma instância real isolada do DataGrip, com projeto vazio em modo seguro e sem conexão a banco. A primeira inspeção revelou que o gerenciador completo ficava apertado na lateral do IDE. A UI foi ajustada para abrir o gerenciador em janela própria, redimensionável, com tamanho inicial de 1120x760. A Tool Window conserva atalhos e consultas.
+O plugin foi carregado em uma instância real isolada do DataGrip, com projeto vazio em modo seguro e sem conexão a banco. A primeira inspeção revelou que o gerenciador completo ficava apertado na lateral do IDE. A UI foi ajustada para abrir o gerenciador em janela própria, redimensionável, com tamanho inicial de 1120x760. A janela foi aberta e inspecionada no IDE real, com revisão SQL e FLUSH PRIVILEGES visíveis. A Tool Window conserva atalhos e consultas.
 
 ## Ferramentas atuais
 

@@ -22,15 +22,18 @@ public final class ToolkitToolWindowFactory implements ToolWindowFactory {
             }
         };
         var manager = new java.util.concurrent.atomic.AtomicReference<AccountManagerDialog>();
-        var launcher = Forms.stack();
-        var description = new javax.swing.JTextArea("Edite usuários, roles e permissões por schema ou tabela em uma janela própria, com revisão antes de aplicar.");
+        var launcher = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
+        launcher.setBorder(javax.swing.BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        var description = new javax.swing.JTextArea("Contas, roles e permissões por schema ou tabela. Abra o gerenciador para revisar e aplicar mudanças.", 3, 20);
         description.setEditable(false);
         description.setLineWrap(true);
         description.setWrapStyleWord(true);
         description.setOpaque(false);
-        description.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 85));
-        launcher.add(description);
-        Forms.button(launcher, "Abrir gerenciador de usuários e permissões", () -> {
+        description.setFont(javax.swing.UIManager.getFont("Label.font"));
+        launcher.add(description, java.awt.BorderLayout.NORTH);
+        var launcherActions = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        launcher.add(launcherActions, java.awt.BorderLayout.CENTER);
+        Forms.button(launcherActions, "Abrir gerenciador", () -> {
             var current = manager.get();
             if (current != null && current.getWindow() != null && current.getWindow().isShowing()) {
                 current.getWindow().toFront();
