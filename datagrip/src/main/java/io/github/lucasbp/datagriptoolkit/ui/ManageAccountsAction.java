@@ -2,7 +2,6 @@ package io.github.lucasbp.datagriptoolkit.ui;
 
 import com.intellij.database.dataSource.LocalDataSource;
 import com.intellij.database.psi.DbElement;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ManageAccountsAction extends AnAction implements DumbAware {
     public ManageAccountsAction() {
-        super("Gerenciar usuários e permissões", "Administrar a conexão MySQL/Aurora selecionada", AllIcons.General.User);
+        super("Gerenciar usuários e permissões", "Administrar a conexão MySQL/Aurora selecionada", ToolkitIcons.TOOLKIT);
     }
 
     @Override public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.BGT; }

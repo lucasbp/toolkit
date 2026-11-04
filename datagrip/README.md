@@ -40,9 +40,9 @@ Alvo de compilação e verificação: DataGrip 2026.2.6.1, build 262.11879.103, 
 
 ## Pacote e pipeline
 
-O ZIP e o SHA-256 ficam em `artifacts/datagrip` na raiz do projeto, inclusive quando o build roda numa worktree. Essa pasta é ignorada pelo Git. O pacote atual se chama `datagrip-toolkit-0.3.1.zip` e será anexado como asset da Release de homologação após a pipeline passar.
+O ZIP e o SHA-256 ficam em `artifacts/datagrip` na raiz do projeto, inclusive quando o build roda numa worktree. Essa pasta é ignorada pelo Git. O pacote atual se chama `datagrip-toolkit-0.3.2.zip` e será anexado como asset da Release de homologação após a pipeline passar.
 
-Instale no DataGrip em Settings, Plugins, engrenagem, Install Plugin from Disk. Selecione o ZIP do plugin e reinicie se solicitado. A Tool Window chama-se SQL Toolkit. O pacote inicial não tem assinatura Marketplace.
+Instale no DataGrip em Settings, Plugins, engrenagem, Install Plugin from Disk. Selecione o ZIP do plugin e reinicie se solicitado. A Tool Window chama-se SQL Toolkit. O plugin tem identidade própria de banco e terminal em SVG, com variações para temas claro e escuro, incluindo a barra do Database Explorer e o gerenciador de plugins. O pacote inicial não tem assinatura Marketplace.
 
 `build.ps1` usa o Gradle Wrapper 9.8.2 com checksum da distribuição, testa, verifica estrutura e empacota. Aceita LocalIdePath, JdkPath e ArtifactDirectory sem mudar a configuração global da máquina. O wrapper original inclui sua licença no JAR.
 
