@@ -20,7 +20,10 @@ try {
     & .\gradlew.bat @gradleArgs
     if ($LASTEXITCODE -ne 0) { throw "Build falhou: $LASTEXITCODE" }
     New-Item -ItemType Directory -Path $ArtifactDirectory -Force | Out-Null
-    Get-ChildItem './build/distributions/datagrip-toolkit-*.zip' | ForEach-Object {
+    $versionMatch = [regex]::Match([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'build.gradle.kts')), '(?m)^version\s*=\s*"([^"]+)"')
+    if (-not $versionMatch.Success) { throw 'Versão do plugin não encontrada.' }
+    $pluginVersion = $versionMatch.Groups[1].Value
+    Get-Item -LiteralPath "./build/distributions/datagrip-toolkit-$pluginVersion.zip" | ForEach-Object {
         $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
         [IO.File]::WriteAllText("$($_.FullName).sha256", "$hash  $($_.Name)`n")
         Copy-Item -LiteralPath $_.FullName, "$($_.FullName).sha256" -Destination $ArtifactDirectory -Force
