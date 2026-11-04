@@ -3,8 +3,15 @@ name: DataGrip Toolkit
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'datagrip/**'
+      - '.github/workflows/plugin.yml'
   push:
     branches: [main]
+    tags: ['datagrip-v*']
+    paths:
+      - 'datagrip/**'
+      - '.github/workflows/plugin.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,13 +25,24 @@ jobs:
   package:
     runs-on: windows-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: datagrip
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6.1.0
         with:
           distribution: temurin
           java-version: '25'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6.4.1
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/datagrip-v')
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path build.gradle.kts -Pattern '^version = "([^"]+)"$').Matches.Groups[1].Value
+          if ($env:GITHUB_REF_NAME -ne "datagrip-v$version") { throw 'Tag e versão do módulo são diferentes.' }
       - name: Test, verify structure and package
         shell: pwsh
         run: ./build.ps1
@@ -33,18 +51,49 @@ jobs:
         run: |
           ./gradlew.bat --no-daemon verifyPlugin
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: datagrip-toolkit-${{ github.sha }}
           path: |
-            build/distributions/datagrip-toolkit-*.zip
-            build/distributions/datagrip-toolkit-*.sha256
+            datagrip/build/distributions/datagrip-toolkit-*.zip
+            datagrip/build/distributions/datagrip-toolkit-*.sha256
           if-no-files-found: error
           retention-days: 14
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
           name: datagrip-toolkit-reports-${{ github.sha }}
-          path: build/reports/
+          path: datagrip/build/reports/
           if-no-files-found: ignore
           retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/datagrip-v')
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: datagrip-toolkit-${{ github.sha }}
+          path: release
+      - name: Publish installable plugin
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring('datagrip-v'.Length)
+          $zip = Get-ChildItem -Path release -Recurse -File -Filter "datagrip-toolkit-$version.zip"
+          if (@($zip).Count -ne 1) { throw 'ZIP instalável não encontrado ou duplicado.' }
+          $checksum = "$($zip.FullName).sha256"
+          if (-not (Test-Path -LiteralPath $checksum)) { throw 'Checksum ausente.' }
+          $actual = (Get-FileHash -LiteralPath $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = (Get-Content -LiteralPath $checksum -Raw).Split(' ')[0].Trim()
+          if ($actual -ne $expected) { throw 'Checksum inválido.' }
+          $notes = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          [IO.File]::WriteAllText($notes, '')
+          gh release create $env:GITHUB_REF_NAME $zip.FullName $checksum --title "SQL Toolkit $version" --notes-file $notes --prerelease --verify-tag
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
