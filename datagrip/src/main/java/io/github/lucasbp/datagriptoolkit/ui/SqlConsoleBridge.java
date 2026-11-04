@@ -28,7 +28,7 @@ final class SqlConsoleBridge {
 
     List<Source> sources() {
         return LocalDataSourceManager.getInstance(project).getDataSources().stream()
-            .filter(source -> source.getDbms().getName().equalsIgnoreCase("MySQL"))
+            .filter(SqlConsoleBridge::supports)
             .map(Source::new).toList();
     }
 
@@ -78,7 +78,11 @@ final class SqlConsoleBridge {
         if (!table.isValid()) return false;
         var dataSource = table.getDataSource();
         return dataSource != null && dataSource.getDelegateDataSource() instanceof LocalDataSource source
-            && source.getDbms().getName().equalsIgnoreCase("MySQL");
+            && supports(source);
+    }
+
+    static boolean supports(LocalDataSource source) {
+        return source.getDbms() == com.intellij.database.Dbms.MYSQL || source.getDbms() == com.intellij.database.Dbms.MYSQL_AURORA;
     }
 
     static TableChoice table(DbTable table) {
@@ -106,7 +110,7 @@ final class SqlConsoleBridge {
         var previous = (Source) selector.getSelectedItem();
         selector.removeAllItems();
         for (var source : LocalDataSourceManager.getInstance(project).getDataSources()) {
-            if (source.getDbms().getName().equalsIgnoreCase("MySQL")) selector.addItem(new Source(source));
+            if (supports(source)) selector.addItem(new Source(source));
         }
         selector.setSelectedIndex(-1);
         if (previous != null) {

@@ -9,6 +9,10 @@
         <toolWindow id="SQL Toolkit" anchor="right" factoryClass="io.github.lucasbp.datagriptoolkit.ui.ToolkitToolWindowFactory"/>
     </extensions>
     <actions>
+        <action id="LucasBP.DataGripToolkit.ManageAccounts" class="io.github.lucasbp.datagriptoolkit.ui.ManageAccountsAction">
+            <add-to-group group-id="DatabaseViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="DatabaseViewToolbar" anchor="last"/>
+        </action>
         <group id="LucasBP.DataGripToolkit.QuickQueries" text="Consultas rápidas" popup="true">
             <add-to-group group-id="DatabaseViewPopupMenu" anchor="last"/>
             <action id="LucasBP.DataGripToolkit.Select1000" class="io.github.lucasbp.datagriptoolkit.ui.QuickSelectAction" text="SELECT das primeiras 1000 linhas"/>

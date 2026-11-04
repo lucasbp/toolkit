@@ -44,6 +44,7 @@ public final class AccountAdminPanel extends JPanel {
     }
 
     private final Backend backend;
+    private final String pinnedConnectionId;
     private final JComboBox<ConnectionChoice> connections = new JComboBox<>();
     private final JTextField search = new JTextField();
     private final DefaultListModel<MySqlAccountService.AccountEntry> accountModel = new DefaultListModel<>();
@@ -74,8 +75,13 @@ public final class AccountAdminPanel extends JPanel {
     private boolean disposed;
 
     public AccountAdminPanel(Backend backend) {
+        this(backend, null);
+    }
+
+    public AccountAdminPanel(Backend backend, String connectionId) {
         super(new BorderLayout(12, 12));
         this.backend = backend;
+        this.pinnedConnectionId = connectionId;
         connections.setRenderer(Forms.literalRenderer());
         schemas.setRenderer(Forms.literalRenderer());
         tables.setRenderer(Forms.literalRenderer());
@@ -88,7 +94,7 @@ public final class AccountAdminPanel extends JPanel {
         var toolbar = new JPanel(new BorderLayout(8, 0));
         toolbar.add(connections, BorderLayout.CENTER);
         var tools = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        button(tools, "Conexões", this::refreshConnections);
+        if (connectionId == null) button(tools, "Conexões", this::refreshConnections);
         button(tools, "Carregar usuários", this::loadAccounts);
         button(tools, "Novo usuário / role", this::createAccount);
         toolbar.add(tools, BorderLayout.EAST);
@@ -161,6 +167,12 @@ public final class AccountAdminPanel extends JPanel {
         roles.setDefaultRenderer(Object.class, renderer);
         currentPermissions.setDefaultRenderer(Object.class, renderer);
         refreshConnections();
+        if (connectionId != null) {
+            connections.setEnabled(false);
+            if (connections.getItemCount() != 1) throw new IllegalArgumentException("A conexão selecionada não está mais disponível.");
+            connections.setSelectedIndex(0);
+            javax.swing.SwingUtilities.invokeLater(() -> { if (!disposed) loadAccounts(); });
+        }
     }
 
     private JPanel permissionEditor() {
@@ -197,7 +209,9 @@ public final class AccountAdminPanel extends JPanel {
     private void refreshConnections() {
         if (worker != null) return;
         connections.removeAllItems();
-        for (var connection : backend.connections()) connections.addItem(connection);
+        for (var connection : backend.connections()) {
+            if (pinnedConnectionId == null || pinnedConnectionId.equals(connection.id())) connections.addItem(connection);
+        }
         connections.setSelectedIndex(-1);
     }
 
@@ -521,7 +535,7 @@ public final class AccountAdminPanel extends JPanel {
         };
         worker.execute();
     }
-    private void setBusy(boolean busy) { enableChildren(this, !busy); status.setEnabled(true); apply.setEnabled(!busy && (plan != null || identityPlan != null)); tables.setEnabled(!busy && scope.getSelectedIndex() == 1); }
+    private void setBusy(boolean busy) { enableChildren(this, !busy); connections.setEnabled(!busy && pinnedConnectionId == null); status.setEnabled(true); apply.setEnabled(!busy && (plan != null || identityPlan != null)); tables.setEnabled(!busy && scope.getSelectedIndex() == 1); }
     private static void enableChildren(java.awt.Container parent, boolean enabled) { for (var child : parent.getComponents()) { if (!(child instanceof JLabel)) child.setEnabled(enabled); if (child instanceof java.awt.Container container) enableChildren(container, enabled); } }
     public void dispose() { disposed = true; if (worker != null) worker.cancel(true); worker = null; snapshot = null; plan = null; identityPlan = null; grants.setText(""); preview.setText(""); }
 }

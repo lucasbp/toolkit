@@ -12,10 +12,15 @@ final class AccountManagerDialog extends DialogWrapper {
     private final AccountAdminPanel admin;
 
     AccountManagerDialog(Project project, AccountAdminPanel.Backend backend) {
+        this(project, backend, null);
+    }
+
+    AccountManagerDialog(Project project, AccountAdminPanel.Backend backend, String connectionId) {
         super(project, false, IdeModalityType.MODELESS);
-        admin = new AccountAdminPanel(backend);
+        admin = new AccountAdminPanel(backend, connectionId);
         admin.setPreferredSize(new Dimension(1120, 760));
-        setTitle("SQL Toolkit: usuários e permissões");
+        String name = connectionId == null ? "" : backend.connections().stream().filter(item -> connectionId.equals(item.id())).findFirst().map(item -> " · " + item.label()).orElse("");
+        setTitle("Usuários e permissões" + name);
         init();
         setResizable(true);
         getWindow().setMinimumSize(new Dimension(960, 680));

@@ -4,7 +4,7 @@ Plugin DataGrip para administrar contas MySQL/Aurora por uma tela visual e acele
 
 ## Usuários e permissões
 
-Escolha uma conexão MySQL configurada no DataGrip e clique em Carregar usuários. A lista permite buscar nome ou host. O gerenciador abre em uma janela própria, redimensionável, para evitar controles apertados na lateral do IDE. A área à direita apresenta a conta exata e suas permissões; formatos de grant reconhecidos são organizados por objeto, e o texto integral retornado pelo servidor continua disponível na aba SQL atual.
+No Database Explorer, selecione uma conexão MySQL/Aurora, schema ou tabela. Use o botão direito e Gerenciar usuários e permissões, ou o ícone de usuário na barra do explorador. O gerenciador abre vinculado à conexão selecionada e carrega as contas automaticamente. Reabrir a mesma conexão traz a janela existente à frente; conexões diferentes têm janelas independentes. A lista permite buscar nome ou host. O gerenciador abre em uma janela própria, redimensionável, para evitar controles apertados na lateral do IDE. A área à direita apresenta a conta exata e suas permissões; formatos de grant reconhecidos são organizados por objeto, e o texto integral retornado pelo servidor continua disponível na aba SQL atual.
 
 - Editar usuário prepara alteração de nome, host, bloqueio de login e nova senha aleatória. A senha é gerada pelo servidor, preservando o método de autenticação existente quando suportado. Métodos externos, como IAM, não são substituídos.
 - Roles permite alterar atribuições e roles ativas por padrão. Cada inclusão ou remoção vira uma ação explícita; as demais atribuições são preservadas.
@@ -40,7 +40,7 @@ Alvo de compilação e verificação: DataGrip 2026.2.6.1, build 262.11879.103, 
 
 ## Pacote e pipeline
 
-O ZIP e o SHA-256 ficam em `artifacts/datagrip` na raiz do projeto, inclusive quando o build roda numa worktree. Essa pasta é ignorada pelo Git. O pacote atual se chama `datagrip-toolkit-0.2.1.zip` e será anexado como asset da Release de homologação após a pipeline passar.
+O ZIP e o SHA-256 ficam em `artifacts/datagrip` na raiz do projeto, inclusive quando o build roda numa worktree. Essa pasta é ignorada pelo Git. O pacote atual se chama `datagrip-toolkit-0.3.0.zip` e será anexado como asset da Release de homologação após a pipeline passar.
 
 Instale no DataGrip em Settings, Plugins, engrenagem, Install Plugin from Disk. Selecione o ZIP do plugin e reinicie se solicitado. A Tool Window chama-se SQL Toolkit. O pacote inicial não tem assinatura Marketplace.
 

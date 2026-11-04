@@ -35,6 +35,34 @@ class AccountAdminPanelTest {
     private final MySqlAccount role = new MySqlAccount("leitura/relatorios", "%");
 
     @Test
+    void contextOpeningLoadsOnlyTheSelectedConnectionWithoutMutations() throws Exception {
+        var backend = new FakeBackend();
+        var panel = onEdt(() -> new AccountAdminPanel(backend, "production"));
+        try {
+            onEdt(() -> null);
+            awaitIdle(panel);
+            onEdt(() -> {
+                var selector = field(panel, "connections", JComboBox.class);
+                assertFalse(selector.isEnabled());
+                assertEquals(1, selector.getItemCount());
+                assertEquals("production", ((AccountAdminPanel.ConnectionChoice) selector.getSelectedItem()).id());
+                assertTrue(field(panel, "accountModel", javax.swing.DefaultListModel.class).getSize() > 0);
+                return null;
+            });
+            assertEquals(List.of("production"), backend.opened);
+            assertTrue(backend.executed.isEmpty());
+        } finally { onEdt(() -> { panel.dispose(); return null; }); }
+    }
+
+    @Test
+    void missingContextConnectionNeverFallsBackToAnotherServer() throws Exception {
+        var backend = new FakeBackend();
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> onEdt(() -> new AccountAdminPanel(backend, "deleted-connection")));
+        assertTrue(backend.opened.isEmpty());
+    }
+
+    @Test
     void loadsAccountReviewsRoleThenAppliesAndFlushes() throws Exception {
         var backend = new FakeBackend();
         var panel = panel(backend);
@@ -256,6 +284,7 @@ class AccountAdminPanelTest {
         final List<String> grants = new ArrayList<>(List.of("GRANT USAGE ON *.* TO " + user.sql()));
         final List<MySqlAccount> assigned = new ArrayList<>();
         final List<String> executed = new ArrayList<>();
+        final List<String> opened = new ArrayList<>();
 
         @Override
         public List<AccountAdminPanel.ConnectionChoice> connections() {
@@ -270,6 +299,7 @@ class AccountAdminPanelTest {
 
         @Override
         public SqlExecutor open(AccountAdminPanel.ConnectionChoice connection) {
+            opened.add(connection.id());
             return new SqlExecutor() {
                 @Override
                 public QueryResult query(String sql) throws Exception {
