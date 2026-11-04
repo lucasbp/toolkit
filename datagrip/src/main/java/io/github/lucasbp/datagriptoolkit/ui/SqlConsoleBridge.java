@@ -129,8 +129,12 @@ final class SqlConsoleBridge {
         if (!LocalDataSourceManager.getInstance(project).getDataSources().contains(selected.source())) {
             throw new IllegalArgumentException("A conexão foi removida. Atualize a lista.");
         }
-        var console = JdbcConsole.newConsole(project).fromDataSource(selected.source()).build();
-        WriteCommandAction.runWriteCommandAction(project, () -> console.getDocument().setText(sql));
-        FileEditorManager.getInstance(project).openFile(console.getVirtualFile(), true);
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+            var file = com.intellij.database.editor.DatabaseEditorHelper.createNewConsoleVirtualFile(selected.source());
+            if (file == null) throw new IllegalArgumentException("Não foi possível criar o arquivo de consulta para esta conexão.");
+            var console = JdbcConsole.newConsole(project).fromDataSource(selected.source()).forFile(file).build();
+            console.getDocument().setText(sql);
+            FileEditorManager.getInstance(project).openFile(console.getVirtualFile(), true);
+        });
     }
 }
