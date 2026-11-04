@@ -1,0 +1,6 @@
+.codex/worktrees/
+artifacts/
+.gradle/
+.intellijPlatform/
+build/
+.idea/
