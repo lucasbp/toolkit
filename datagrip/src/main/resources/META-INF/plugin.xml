@@ -1,12 +1,13 @@
 <idea-plugin>
     <id>io.github.lucasbp.datagrip-toolkit</id>
-    <name>SQL Toolkit</name>
+    <name>Server Management</name>
     <vendor>LucasBP</vendor>
     <description><![CDATA[Visual MySQL and Aurora account management, scoped schema and table permissions, explicit role changes and quick SELECT templates. Reuses DataGrip connections. Reviews changes before applying and reloads privileges after application when selected.]]></description>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.database</depends>
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow id="SQL Toolkit" anchor="right" icon="/icons/toolWindowToolkit.svg" factoryClass="io.github.lucasbp.datagriptoolkit.ui.ToolkitToolWindowFactory"/>
+        <toolWindow id="Server Management" anchor="right" icon="/icons/toolWindowToolkit.svg" factoryClass="io.github.lucasbp.datagriptoolkit.ui.ToolkitToolWindowFactory"/>
+        <fileEditorProvider implementation="io.github.lucasbp.datagriptoolkit.ui.ManagementEditorProvider"/>
         <iconMapper mappingFile="ToolkitIconMappings.json"/>
     </extensions>
     <actions>

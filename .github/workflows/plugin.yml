@@ -1,4 +1,4 @@
-name: DataGrip Toolkit
+name: Server Management
 
 on:
   pull_request:
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: datagrip-toolkit-${{ github.ref }}
+  group: server-management-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -53,16 +53,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v7.0.2
         with:
-          name: datagrip-toolkit-${{ github.sha }}
+          name: server-management-${{ github.sha }}
           path: |
-            datagrip/build/distributions/datagrip-toolkit-*.zip
-            datagrip/build/distributions/datagrip-toolkit-*.sha256
+            datagrip/build/distributions/server-management-*.zip
+            datagrip/build/distributions/server-management-*.sha256
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: datagrip-toolkit-reports-${{ github.sha }}
+          name: server-management-reports-${{ github.sha }}
           path: datagrip/build/reports/
           if-no-files-found: ignore
           retention-days: 7
@@ -77,7 +77,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8.0.2
         with:
-          name: datagrip-toolkit-${{ github.sha }}
+          name: server-management-${{ github.sha }}
           path: release
       - name: Publish installable plugin
         shell: pwsh
@@ -86,7 +86,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           $version = $env:GITHUB_REF_NAME.Substring('datagrip-v'.Length)
-          $zip = Get-ChildItem -Path release -Recurse -File -Filter "datagrip-toolkit-$version.zip"
+          $zip = Get-ChildItem -Path release -Recurse -File -Filter "server-management-$version.zip"
           if (@($zip).Count -ne 1) { throw 'ZIP instalável não encontrado ou duplicado.' }
           $checksum = "$($zip.FullName).sha256"
           if (-not (Test-Path -LiteralPath $checksum)) { throw 'Checksum ausente.' }
@@ -95,5 +95,5 @@ jobs:
           if ($actual -ne $expected) { throw 'Checksum inválido.' }
           $notes = Join-Path $env:RUNNER_TEMP 'release-notes.md'
           [IO.File]::WriteAllText($notes, '')
-          gh release create $env:GITHUB_REF_NAME $zip.FullName $checksum --title "SQL Toolkit $version" --notes-file $notes --prerelease --verify-tag
+          gh release create $env:GITHUB_REF_NAME $zip.FullName $checksum --title "Server Management $version" --notes-file $notes --prerelease --verify-tag
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.lucasbp"
-version = "0.3.2"
+version = "0.3.3"
 
 repositories {
     mavenCentral()
@@ -27,7 +27,7 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
 
 intellijPlatform {
     pluginConfiguration {
-        name = "SQL Toolkit"
+        name = "Server Management"
         ideaVersion {
             sinceBuild = "262.11879"
             untilBuild = "262.*"

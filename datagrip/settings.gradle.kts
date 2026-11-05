@@ -1,1 +1,1 @@
-rootProject.name = "datagrip-toolkit"
+rootProject.name = "server-management"

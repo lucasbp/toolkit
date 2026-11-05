@@ -45,7 +45,7 @@ final class Forms {
         button.addActionListener(event -> {
             try { action.run(); }
             catch (IllegalArgumentException error) {
-                JOptionPane.showMessageDialog(parent, error.getMessage(), "DataGrip Toolkit", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(parent, error.getMessage(), "Server Management", JOptionPane.WARNING_MESSAGE);
             }
         });
         parent.add(button);

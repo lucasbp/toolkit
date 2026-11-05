@@ -14,12 +14,16 @@ import javax.swing.SpinnerNumberModel;
 
 final class SelectBuilderPanel extends JPanel {
     SelectBuilderPanel(SqlConsoleBridge bridge) {
+        this(bridge, null);
+    }
+
+    SelectBuilderPanel(SqlConsoleBridge bridge, String connectionId) {
         super(new BorderLayout());
         var body = Forms.stack();
         var sources = new JComboBox<SqlConsoleBridge.Source>();
         sources.setRenderer(Forms.literalRenderer());
         Forms.field(body, "Conexão MySQL / Aurora MySQL", sources);
-        Forms.button(body, "Atualizar conexões", () -> bridge.refresh(sources));
+        var refresh = Forms.button(body, "Atualizar conexões", () -> bridge.refresh(sources));
         var schema = new JTextField();
         var table = new JTextField();
         var columns = new JTextField();
@@ -66,6 +70,11 @@ final class SelectBuilderPanel extends JPanel {
         descending.addActionListener(event -> preview.setText(""));
         limit.addChangeListener(event -> preview.setText(""));
         add(new JScrollPane(body), BorderLayout.CENTER);
-        bridge.refresh(sources);
+        if (connectionId == null) bridge.refresh(sources);
+        else {
+            sources.addItem(bridge.source(connectionId));
+            sources.setEnabled(false);
+            refresh.setVisible(false);
+        }
     }
 }

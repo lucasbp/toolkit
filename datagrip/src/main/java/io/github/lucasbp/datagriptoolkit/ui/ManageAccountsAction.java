@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ManageAccountsAction extends AnAction implements DumbAware {
     public ManageAccountsAction() {
-        super("Gerenciar usuários e permissões", "Administrar a conexão MySQL/Aurora selecionada", ToolkitIcons.TOOLKIT);
+        super("Server Management: usuários e permissões", "Administrar a conexão selecionada na área central", ToolkitIcons.TOOLKIT);
     }
 
     @Override public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.BGT; }
@@ -28,7 +28,8 @@ public final class ManageAccountsAction extends AnAction implements DumbAware {
     }
 
     @Override public void update(@NotNull AnActionEvent event) {
-        boolean available = event.getProject() != null && selected(event.getData(CommonDataKeys.PSI_ELEMENT)) != null;
+        var element = event.getData(CommonDataKeys.PSI_ELEMENT);
+        boolean available = event.getProject() != null && (element == null || selected(element) != null);
         event.getPresentation().setEnabledAndVisible(available);
     }
 
@@ -40,8 +41,11 @@ public final class ManageAccountsAction extends AnAction implements DumbAware {
             var source = selected(element);
             return source == null ? null : source.getUniqueId();
         }).expireWith(project).finishOnUiThread(ModalityState.defaultModalityState(), id -> {
-            if (id == null) return;
-            try { project.getService(AccountManagerWindows.class).open(id); }
+            try {
+                var manager = project.getService(AccountManagerWindows.class);
+                if (id == null) manager.openCurrent();
+                else manager.open(id);
+            }
             catch (IllegalArgumentException problem) { Messages.showWarningDialog(project, problem.getMessage(), "Usuários e permissões"); }
         }).submit(AppExecutorUtil.getAppExecutorService());
     }

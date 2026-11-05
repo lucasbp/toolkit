@@ -34,7 +34,7 @@ public class QuickSelectAction extends AnAction implements DumbAware {
                     var bridge = new SqlConsoleBridge(project);
                     bridge.open(bridge.source(selected.sourceId()), sql(selected));
                 } catch (IllegalArgumentException problem) {
-                    Messages.showWarningDialog(project, problem.getMessage(), "DataGrip Toolkit");
+                    Messages.showWarningDialog(project, problem.getMessage(), "Server Management");
                 }
             })
             .submit(AppExecutorUtil.getAppExecutorService());

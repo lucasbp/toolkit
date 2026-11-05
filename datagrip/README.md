@@ -1,10 +1,12 @@
-# SQL Toolkit
+# Server Management
 
 Plugin DataGrip para administrar contas MySQL/Aurora por uma tela visual e acelerar consultas do dia a dia. Módulo `datagrip/` do repositório público [lucasbp/toolkit](https://github.com/lucasbp/toolkit).
 
 ## Usuários e permissões
 
-No Database Explorer, selecione uma conexão MySQL/Aurora, schema ou tabela. Use o botão direito e Gerenciar usuários e permissões, ou o ícone de usuário na barra do explorador. O gerenciador abre vinculado à conexão selecionada e carrega as contas automaticamente. Reabrir a mesma conexão traz a janela existente à frente; conexões diferentes têm janelas independentes. A lista permite buscar nome ou host. O gerenciador abre em uma janela própria, redimensionável, para evitar controles apertados na lateral do IDE. A área à direita apresenta a conta exata e suas permissões; formatos de grant reconhecidos são organizados por objeto, e o texto integral retornado pelo servidor continua disponível na aba SQL atual.
+No Database Explorer, selecione uma conexão MySQL/Aurora, schema ou tabela. Use Server Management: usuários e permissões no botão direito, ou o ícone de servidor com engrenagem na barra do explorador. A gestão abre em uma aba na área central, ao lado dos consoles SQL, vinculada ao identificador exato da conexão. Reabrir a mesma conexão reutiliza a aba e mantém a revisão em andamento. Usuários, Consultas rápidas e Montar SELECT compartilham essa conexão. Outra conexão abre o seletor sem descartar a aba atual.
+
+O atalho Server Management no menu de janelas também abre a área central. Quando o contexto não identifica uma conexão, mostra o seletor. Se explorador e console indicarem servidores diferentes, pede uma escolha explícita. O painel Services é recolhido durante a gestão e restaurado ao sair quando estava visível antes; os consoles SQL continuam abertos.
 
 - Editar usuário prepara alteração de nome, host, bloqueio de login e nova senha aleatória. A senha é gerada pelo servidor, preservando o método de autenticação existente quando suportado. Métodos externos, como IAM, não são substituídos.
 - Roles permite alterar atribuições e roles ativas por padrão. Cada inclusão ou remoção vira uma ação explícita; as demais atribuições são preservadas.
@@ -40,9 +42,9 @@ Alvo de compilação e verificação: DataGrip 2026.2.6.1, build 262.11879.103, 
 
 ## Pacote e pipeline
 
-O ZIP e o SHA-256 ficam em `artifacts/datagrip` na raiz do projeto, inclusive quando o build roda numa worktree. Essa pasta é ignorada pelo Git. O pacote atual se chama `datagrip-toolkit-0.3.2.zip` e será anexado como asset da Release de homologação após a pipeline passar.
+O ZIP e o SHA-256 ficam em `artifacts/datagrip` na raiz do projeto, inclusive quando o build roda numa worktree. Essa pasta é ignorada pelo Git. O pacote atual se chama `server-management-0.3.3.zip` e é gerado localmente. A pipeline atualizada publicará o asset quando uma tag correspondente for enviada e passar pelas verificações.
 
-Instale no DataGrip em Settings, Plugins, engrenagem, Install Plugin from Disk. Selecione o ZIP do plugin e reinicie se solicitado. A Tool Window chama-se SQL Toolkit. O plugin tem identidade própria de banco e terminal em SVG, com variações para temas claro e escuro, incluindo a barra do Database Explorer e o gerenciador de plugins. O pacote inicial não tem assinatura Marketplace.
+Instale no DataGrip em Settings, Plugins, engrenagem, Install Plugin from Disk. Selecione o ZIP do plugin e reinicie se solicitado. A Tool Window chama-se Server Management. O plugin tem ícone de servidor com engrenagem em SVG, com variações para temas claro e escuro, incluindo a barra do Database Explorer e o gerenciador de plugins. O pacote inicial não tem assinatura Marketplace.
 
 `build.ps1` usa o Gradle Wrapper 9.8.2 com checksum da distribuição, testa, verifica estrutura e empacota. Aceita LocalIdePath, JdkPath e ArtifactDirectory sem mudar a configuração global da máquina. O wrapper original inclui sua licença no JAR.
 

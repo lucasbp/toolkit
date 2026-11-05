@@ -14,6 +14,10 @@ final class QuickQueriesPanel extends JPanel {
     private SwingWorker<List<SqlConsoleBridge.TableChoice>, Void> worker;
 
     QuickQueriesPanel(SqlConsoleBridge bridge) {
+        this(bridge, null);
+    }
+
+    QuickQueriesPanel(SqlConsoleBridge bridge, String connectionId) {
         super(new BorderLayout());
         var body = Forms.stack();
         var sources = new JComboBox<SqlConsoleBridge.Source>();
@@ -38,9 +42,9 @@ final class QuickQueriesPanel extends JPanel {
                 protected void done() {
                     if (disposed || worker != this) return;
                     worker = null;
-                    sources.setEnabled(true);
+                    sources.setEnabled(connectionId == null);
                     tables.setEnabled(true);
-                    refresh.setEnabled(true);
+                    refresh.setEnabled(connectionId == null);
                     try {
                         if (!source.equals(sources.getSelectedItem())) return;
                         for (var table : get()) tables.addItem(table);
@@ -67,7 +71,12 @@ final class QuickQueriesPanel extends JPanel {
         body.add(status);
         body.add(new JLabel("Também disponíveis com botão direito na tabela: Consultas rápidas."));
         add(new JScrollPane(body), BorderLayout.CENTER);
-        bridge.refresh(sources);
+        if (connectionId == null) bridge.refresh(sources);
+        else {
+            sources.addItem(bridge.source(connectionId));
+            sources.setEnabled(false);
+            refresh.setVisible(false);
+        }
     }
 
     private static SqlConsoleBridge.TableChoice selected(JComboBox<SqlConsoleBridge.TableChoice> tables) {
