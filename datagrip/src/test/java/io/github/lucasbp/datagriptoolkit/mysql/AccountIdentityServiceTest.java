@@ -154,7 +154,7 @@ class AccountIdentityServiceTest {
         assertEquals("statement", result.failedStage());
         assertEquals(List.of(plan.statements().getFirst()), executor.executed);
         assertEquals(renamed, result.refreshedSnapshot().account());
-        assertTrue(result.errorMessage().contains("Não foi possível confirmar"));
+        assertTrue(result.errorMessage().contains("Could not confirm"));
     }
 
     @Test
@@ -180,7 +180,7 @@ class AccountIdentityServiceTest {
         var result = service.apply(plan, false);
         assertEquals(1, result.completedCount());
         assertEquals("password_result", result.failedStage());
-        assertTrue(result.errorMessage().contains("A senha foi alterada"));
+        assertTrue(result.errorMessage().contains("The password changed"));
         assertEquals(1, executor.executed.size());
     }
 

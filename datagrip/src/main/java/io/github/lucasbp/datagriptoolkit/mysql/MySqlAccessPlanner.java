@@ -18,12 +18,12 @@ public final class MySqlAccessPlanner {
     }
 
     public static String createRole(MySqlAccount role) {
-        if (role.name().isEmpty()) throw new IllegalArgumentException("Informe o nome da nova role.");
+        if (role.name().isEmpty()) throw new IllegalArgumentException("Enter the new role name.");
         return "CREATE ROLE " + role.sql() + ";";
     }
 
     public static String createUserWithRandomPassword(MySqlAccount user) {
-        if (user.name().isEmpty()) throw new IllegalArgumentException("Informe o nome do novo usuário.");
+        if (user.name().isEmpty()) throw new IllegalArgumentException("Enter the new user name.");
         return "CREATE USER " + user.sql() + " IDENTIFIED BY RANDOM PASSWORD;";
     }
 
@@ -35,7 +35,7 @@ public final class MySqlAccessPlanner {
         String scope = MySqlNames.identifier(schema);
         if (table == null) {
             if (schema.indexOf('%') >= 0 || schema.indexOf('_') >= 0 || schema.indexOf('\\') >= 0) {
-                throw new IllegalArgumentException("Para schemas com %, _ ou contrabarra, selecione uma tabela específica.");
+                throw new IllegalArgumentException("For schemas containing %, _ or a backslash, select a specific table.");
             }
             scope += ".*";
         } else {
@@ -47,13 +47,13 @@ public final class MySqlAccessPlanner {
     public static String addDefaultRole(MySqlAccount user, Collection<MySqlAccount> existingDefaultRoles,
                                         MySqlAccount role, boolean snapshotComplete) {
         if (!snapshotComplete) {
-            throw new IllegalArgumentException("Leia todas as roles padrão antes de preparar esta alteração.");
+            throw new IllegalArgumentException("Read all default roles before preparing this change.");
         }
-        Objects.requireNonNull(existingDefaultRoles, "Snapshot de roles padrão obrigatório.");
-        Objects.requireNonNull(role, "Role obrigatória.");
+        Objects.requireNonNull(existingDefaultRoles, "A default-role snapshot is required.");
+        Objects.requireNonNull(role, "A role is required.");
         var roles = new LinkedHashSet<>(existingDefaultRoles);
         if (roles.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Snapshot de roles padrão inválido.");
+            throw new IllegalArgumentException("Invalid default-role snapshot.");
         }
         if (!roles.add(role)) {
             return "";

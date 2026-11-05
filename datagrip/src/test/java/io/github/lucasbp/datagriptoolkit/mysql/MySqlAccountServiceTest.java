@@ -150,7 +150,7 @@ class MySqlAccountServiceTest {
         var result = service.apply(plan);
         assertEquals("statement", result.failedStage());
         assertEquals(1, result.completedCount());
-        assertTrue(result.errorMessage().contains("FLUSH PRIVILEGES também falhou"));
+        assertTrue(result.errorMessage().contains("FLUSH PRIVILEGES also failed"));
         assertEquals("FLUSH PRIVILEGES;", executor.executed.getLast());
         assertNotNull(result.refreshedSnapshot());
     }

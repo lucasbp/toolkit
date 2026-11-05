@@ -66,20 +66,20 @@ public final class AccountIdentityService {
         validateSnapshot(baseline);
         var info = accounts.serverInfo();
         if (info.readOnly() || !info.equals(baseline.serverInfo())) {
-            throw new IllegalArgumentException("O estado da conexão mudou ou está em somente leitura. Recarregue a conta.");
+            throw new IllegalArgumentException("The connection changed or is read-only. Reload the account.");
         }
         if (newIdentity.name().isEmpty() && !baseline.account().name().isEmpty()) {
-            throw new IllegalArgumentException("Informe o nome da conta de destino; não é permitido criar identidade anônima.");
+            throw new IllegalArgumentException("Enter the target account name. Anonymous accounts cannot be created here.");
         }
         var entries = accounts.listAccounts();
         var current = find(entries, baseline.account());
-        if (current == null) throw new IllegalArgumentException("Conta original não está mais na lista. Recarregue os usuários.");
+        if (current == null) throw new IllegalArgumentException("The original account is no longer listed. Reload users.");
         boolean rename = !sameIdentity(baseline.account(), newIdentity);
-        if (rename && find(entries, newIdentity) != null) throw new IllegalArgumentException("A conta de destino já existe.");
+        if (rename && find(entries, newIdentity) != null) throw new IllegalArgumentException("The target account already exists.");
         String plugin = null;
         if (resetPassword) {
             if (!supportsRandomPassword(info.version()) || !info.rolesSupported()) {
-                throw new IllegalArgumentException("Nova senha gerada pelo servidor exige MySQL 8.0.18 ou superior.");
+                throw new IllegalArgumentException("Server-generated passwords require MySQL 8.0.18 or later.");
             }
             plugin = passwordPlugin(baseline.account());
         }
@@ -92,7 +92,7 @@ public final class AccountIdentityService {
             steps.add(new Step(Kind.PASSWORD, "ALTER USER " + newIdentity.sql() + " IDENTIFIED WITH "
                     + MySqlNames.identifier(plugin) + " BY RANDOM PASSWORD;"));
         }
-        if (steps.isEmpty()) throw new IllegalArgumentException("Nenhuma alteração de identidade, bloqueio ou senha foi selecionada.");
+        if (steps.isEmpty()) throw new IllegalArgumentException("No identity, lock or password change was selected.");
         return new Plan(change, current.locked(), plugin, steps);
     }
 
@@ -108,7 +108,7 @@ public final class AccountIdentityService {
             if (verified.baselineLocked() != plan.baselineLocked() || !Objects.equals(verified.passwordPlugin(), plan.passwordPlugin())
                     || !verified.steps.equals(plan.steps)) throw new IllegalArgumentException("Plano mudou.");
         } catch (Exception problem) {
-            return new Result(0, "preflight", "Não foi possível confirmar o estado original, destino, bloqueio ou método de autenticação. Recarregue e revise antes de aplicar.", refreshed, empty);
+            return new Result(0, "preflight", "Could not verify the original account, target, lock or authentication method. Reload and review before applying.", refreshed, empty);
         }
         int completed = 0;
         String failure = "";
@@ -127,8 +127,8 @@ public final class AccountIdentityService {
                 if (step.kind() == Kind.RENAME) target = plan.change().newIdentity();
             } catch (Exception problem) {
                 failure = "statement";
-                error = safeError(problem, "Não foi possível confirmar a alteração " + (completed + 1)
-                        + ". As anteriores podem ter sido aplicadas. Recarregue o estado; não repita automaticamente.");
+                error = safeError(problem, "Could not confirm change " + (completed + 1)
+                        + ". Earlier changes may have been applied. Reload the state; do not retry automatically.");
                 break;
             }
         }
@@ -138,14 +138,14 @@ public final class AccountIdentityService {
             } catch (Exception problem) {
                 if (failure.isEmpty()) {
                     failure = "flush";
-                    error = safeError(problem, "Alterações executadas, mas FLUSH PRIVILEGES falhou. Não repita as alterações.");
+                    error = safeError(problem, "Changes were applied but FLUSH PRIVILEGES failed. Do not repeat the changes.");
                 } else {
-                    error += " " + safeError(problem, "FLUSH PRIVILEGES também falhou.");
+                    error += " " + safeError(problem, "FLUSH PRIVILEGES also failed.");
                 }
             }
         }
         if (plan.change().resetPassword() && completed == plan.steps.size() && password.rows().isEmpty()) {
-            String warning = "A senha foi alterada, mas o driver não retornou o resultado com a nova senha. Não repita sem revisar o estado.";
+            String warning = "The password changed but the driver did not return the new password. Review the state before retrying.";
             if (failure.isEmpty()) failure = "password_result";
             error = error.isEmpty() ? warning : error + " " + warning;
         }
@@ -159,9 +159,9 @@ public final class AccountIdentityService {
             refreshed = null;
             if (failure.isEmpty()) {
                 failure = "refresh";
-                error = safeError(problem, "Alterações executadas, mas não foi possível reler a conta. Não repita sem recarregar.");
+                error = safeError(problem, "Changes were applied but the account could not be reloaded. Reload before retrying.");
             } else {
-                error += " Não foi possível reler a conta.";
+                error += " Could not reload the account.";
             }
         }
         return new Result(completed, failure, error, refreshed, password);
@@ -171,18 +171,18 @@ public final class AccountIdentityService {
         var rows = executor.query("SELECT plugin FROM mysql.user WHERE User = " + text(account.name())
                 + " AND Host = " + text(account.host())).rows();
         if (rows.size() != 1 || rows.getFirst().isEmpty() || rows.getFirst().getFirst() == null) {
-            throw new IllegalArgumentException("Não foi possível ler o método de autenticação atual. Redefinição de senha bloqueada.");
+            throw new IllegalArgumentException("Could not read the current authentication method. Password reset is blocked.");
         }
         String plugin = rows.getFirst().getFirst().toLowerCase(Locale.ROOT);
         if (!PASSWORD_PLUGINS.contains(plugin)) {
-            throw new IllegalArgumentException("O método de autenticação atual é externo ou não suportado. A senha não será alterada nem o método será substituído.");
+            throw new IllegalArgumentException("The authentication method is external or unsupported. The password and authentication method will not be changed.");
         }
         return plugin;
     }
 
     private static void validateSnapshot(MySqlAccountService.Snapshot snapshot) {
-        if (snapshot.serverInfo().readOnly()) throw new IllegalArgumentException("Conexão ou servidor somente leitura.");
-        if (snapshot.grants().isEmpty() || !snapshot.rolesComplete()) throw new IllegalArgumentException("Estado de permissões incompleto. Recarregue antes de alterar a conta.");
+        if (snapshot.serverInfo().readOnly()) throw new IllegalArgumentException("The connection or server is read-only.");
+        if (snapshot.grants().isEmpty() || !snapshot.rolesComplete()) throw new IllegalArgumentException("Privilege information is incomplete. Reload before changing the account.");
     }
 
     private static MySqlAccountService.AccountEntry find(List<MySqlAccountService.AccountEntry> entries, MySqlAccount account) {

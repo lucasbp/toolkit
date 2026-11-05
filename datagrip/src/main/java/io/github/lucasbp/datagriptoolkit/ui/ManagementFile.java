@@ -6,7 +6,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import javax.swing.Icon;
 
 final class ManagementFile extends LightVirtualFile {
-    final String connectionId;
+    volatile String connectionId;
 
     ManagementFile(String name, String connectionId) {
         super(name, new FileType() {

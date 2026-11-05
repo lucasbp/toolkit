@@ -10,7 +10,7 @@ public final class QueryTemplates {
     }
 
     public static String listedColumns(String schema, String table, List<String> columns) {
-        if (columns.isEmpty()) throw new IllegalArgumentException("Atualize os metadados das colunas no DataGrip.");
+        if (columns.isEmpty()) throw new IllegalArgumentException("Refresh column metadata in DataGrip.");
         return MySqlSelectBuilder.build(schema, table, columns, List.of(), List.of(), 1000);
     }
 

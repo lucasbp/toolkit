@@ -17,7 +17,7 @@ public final class ToolkitToolWindowFactory implements ToolWindowFactory {
             try { project.getService(AccountManagerWindows.class).openCurrent(); }
             catch (IllegalArgumentException problem) { Messages.showWarningDialog(project, problem.getMessage(), "Server Management"); }
         };
-        Forms.button(body, "Abrir Server Management", open);
+        Forms.button(body, "Open Server Management", open);
         var content = ContentFactory.getInstance().createContent(body, "", false);
         toolWindow.getContentManager().addContent(content);
         body.addHierarchyListener(event -> {

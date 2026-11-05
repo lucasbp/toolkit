@@ -38,7 +38,7 @@ final class SqlConsoleBridge {
 
     Source source(String id) {
         return sources().stream().filter(item -> item.source().getUniqueId().equals(id)).findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Selecione uma conexão MySQL válida do DataGrip."));
+            .orElseThrow(() -> new IllegalArgumentException("Select a valid MySQL connection from DataGrip."));
     }
 
     record TableChoice(String sourceId, String schema, String table, List<String> columns) {
@@ -46,11 +46,11 @@ final class SqlConsoleBridge {
     }
 
     List<TableChoice> tables(Source selected) {
-        if (selected == null) throw new IllegalArgumentException("Selecione uma conexão MySQL.");
+        if (selected == null) throw new IllegalArgumentException("Select a MySQL connection.");
         var result = ReadAction.nonBlocking(() -> {
             checkCanceled();
             var data = DbPsiFacade.getInstance(project).findDataSource(selected.source().getUniqueId());
-            if (data == null) throw new IllegalArgumentException("Atualize a introspecção da conexão no DataGrip.");
+            if (data == null) throw new IllegalArgumentException("Refresh data source introspection in DataGrip.");
             var snapshot = new ArrayList<TableChoice>();
             for (var table : DasUtil.getTables(data)) {
                 checkCanceled();
@@ -124,14 +124,14 @@ final class SqlConsoleBridge {
     }
 
     void open(Source selected, String sql) {
-        if (selected == null) throw new IllegalArgumentException("Selecione uma conexão MySQL do DataGrip.");
-        if (sql.isBlank()) throw new IllegalArgumentException("Gere o SQL antes de abrir o console.");
+        if (selected == null) throw new IllegalArgumentException("Select a MySQL connection from DataGrip.");
+        if (sql.isBlank()) throw new IllegalArgumentException("Generate SQL before opening the console.");
         if (!LocalDataSourceManager.getInstance(project).getDataSources().contains(selected.source())) {
-            throw new IllegalArgumentException("A conexão foi removida. Atualize a lista.");
+            throw new IllegalArgumentException("The connection was removed. Refresh the list.");
         }
         WriteCommandAction.runWriteCommandAction(project, () -> {
             var file = com.intellij.database.editor.DatabaseEditorHelper.createNewConsoleVirtualFile(selected.source());
-            if (file == null) throw new IllegalArgumentException("Não foi possível criar o arquivo de consulta para esta conexão.");
+            if (file == null) throw new IllegalArgumentException("Could not create a query file for this connection.");
             var console = JdbcConsole.newConsole(project).fromDataSource(selected.source()).forFile(file).build();
             console.getDocument().setText(sql);
             FileEditorManager.getInstance(project).openFile(console.getVirtualFile(), true);

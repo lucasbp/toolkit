@@ -1,55 +1,35 @@
 # Server Management
 
-Plugin DataGrip para administrar contas MySQL/Aurora por uma tela visual e acelerar consultas do dia a dia. Módulo `datagrip/` do repositório público [lucasbp/toolkit](https://github.com/lucasbp/toolkit).
+DataGrip plugin by **Lucas Passos** for managing MySQL/Aurora servers and building everyday SELECT statements. This module belongs to the public [lucasbp/toolkit](https://github.com/lucasbp/toolkit) monorepo. Nuria/RSD integrations are maintained separately.
 
-## Usuários e permissões
+## Server workspace
 
-No Database Explorer, selecione uma conexão MySQL/Aurora, schema ou tabela. Use Server Management: usuários e permissões no botão direito, ou o ícone de servidor com engrenagem na barra do explorador. A gestão abre em uma aba na área central, ao lado dos consoles SQL, vinculada ao identificador exato da conexão. Reabrir a mesma conexão reutiliza a aba e mantém a revisão em andamento. Usuários, Consultas rápidas e Montar SELECT compartilham essa conexão. Outra conexão abre o seletor sem descartar a aba atual.
+Open Server Management from the Database Explorer toolbar or the context menu directly below Properties. The submenu provides Server Info, Processes and User Accounts shortcuts. Management uses one central editor tab with an inline, searchable connection list. Switching servers preserves each server's current page and pending account review. Filtering never opens a connection automatically. If the explorer and console point to different servers, choose explicitly.
 
-O atalho Server Management no menu de janelas também abre a área central. Quando o contexto não identifica uma conexão, mostra o seletor. Se explorador e console indicarem servidores diferentes, pede uma escolha explícita. O painel Services é recolhido durante a gestão e restaurado ao sair quando estava visível antes; os consoles SQL continuam abertos.
+The workspace has three pages: Overview, Processes and Users & Access. Overview reads server hostname, port, version, edition, current schema, authenticated account, connection ID, read-only state and connection limit. Processes reads SHOW FULL PROCESSLIST and supports local filtering and manual refresh. It does not kill sessions. Process visibility follows the authenticated account's server privileges, as documented in the [MySQL manual](https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html).
 
-- Editar usuário prepara alteração de nome, host, bloqueio de login e nova senha aleatória. A senha é gerada pelo servidor, preservando o método de autenticação existente quando suportado. Métodos externos, como IAM, não são substituídos.
-- Roles permite alterar atribuições e roles ativas por padrão. Cada inclusão ou remoção vira uma ação explícita; as demais atribuições são preservadas.
-- Alterar permissões permite escolher schema inteiro ou tabela específica, conceder ou remover um privilégio e reunir mudanças numa revisão. A lista de schemas e tabelas usa os metadados já conhecidos pelo DataGrip; campos editáveis permitem informar objetos ainda não introspectados.
+Connections reuse their DataGrip colors in the list, workspace header and editor tab. Active-tab highlighting still follows the IDE theme. Services is collapsed while management is selected and restored on exit when previously visible. Existing SQL consoles stay open.
 
-Revisar alterações mostra a conta, a conexão e o SQL preparado. Aplicar alterações relê o estado antes de executar; se outro processo mudou a conta ou a leitura estiver incompleta, bloqueia a aplicação. Os comandos são sequenciais, não há promessa de rollback atômico de DCL. Falhas parciais informam quantas operações foram confirmadas e recarregam o estado; não há repetição automática.
+## Users and access
 
-FLUSH PRIVILEGES vem marcado por padrão, conforme o fluxo solicitado. Ele é tentado depois das alterações confirmadas, inclusive quando um comando posterior falha. Falha apenas no flush não é apresentada como falha de todas as alterações. GRANT, REVOKE e comandos de contas já atualizam as permissões sem precisar desse flush; ele exige privilégios próprios no servidor. [Referência MySQL](https://dev.mysql.com/doc/refman/8.0/en/privilege-changes.html).
+Users & Access loads accounts for the chosen connection. Search by user or host. Global Privileges and Schema & Table Privileges are separate views of direct grants; role assignments have their own page and SQL Grants retains the original statements, including formats not summarized by the visual view. Global grants are displayed read-only. The privilege editor changes schema/table permissions; it does not silently promote them to global grants.
 
-Novo usuário / role cria uma conta pelo formulário. Usuários usam senha aleatória do servidor, recurso disponível a partir de MySQL 8.0.18 ou equivalente Aurora; a senha aparece em uma janela e não é gravada pelo plugin. Não há campo de senha literal no histórico SQL do plugin. [Referência de senhas](https://dev.mysql.com/doc/refman/8.0/en/password-management.html).
+Edit user prepares identity, login-lock and server-generated password changes. External authentication methods are preserved. Role changes are explicit and default roles are reviewed separately. Changes are reviewed before Apply, then the account state is read again to detect concurrent changes. Statements execute sequentially without a promise of atomic DCL rollback. Partial failures report confirmed progress and do not retry automatically.
 
-## Consultas rápidas
+Run FLUSH PRIVILEGES after applying changes is selected by default. A flush failure is reported separately from confirmed account changes. Generated passwords are displayed once and are not written to SQL history by the plugin. Server-generated passwords require MySQL 8.0.18 or a compatible Aurora version.
 
-No explorador de bancos, clique com o botão direito em uma tabela MySQL e abra Consultas rápidas:
+## Build SELECT inside the SQL console
 
-- SELECT das primeiras 1000 linhas.
-- SELECT com os nomes das colunas, limitado a 1000 linhas.
-- Contar registros.
+Use Build SELECT on a connected MySQL/Aurora console toolbar or editor context menu. The form opens inside the SQL editor and uses that console's exact connection. Search and select a table from DataGrip metadata, choose columns, an optional typed equality filter, ordering and a limit (1000 by default, maximum 2000). Count also respects the filter. Insert SELECT into console appends and selects the generated statement without executing it or replacing existing SQL. Close restores the original editor header.
 
-Essas ações abrem a consulta pronta em um novo console vinculado à conexão da tabela. Você pode executar pelo comando normal do DataGrip e editar o SQL gerado. Sem ORDER BY, as 1000 linhas não têm ordem garantida.
+Refresh DataGrip introspection if tables or columns are missing. Identifiers are quoted; text filters use hexadecimal UTF-8 literals. A changed or removed console connection blocks insertion until the form is reopened.
 
-A aba Consultas rápidas também permite escolher conexão e tabela sem escrever SQL. Montar SELECT oferece filtro de igualdade tipado, ordenação e limite configurável, com padrão de 1000 registros. Quoting preserva barras, contrabarras e backticks em nomes; texto de filtro usa literal UTF-8 hexadecimal para não depender de NO_BACKSLASH_ESCAPES.
+## Build and install
 
-## Conexão e requisitos
+Target: DataGrip 2026.2.6.1, build 262.11879.103, Java 25, Gradle Wrapper 9.8.2 and IntelliJ Platform Gradle Plugin 2.19.0. The declared compatibility range is the 262 line starting at 262.11879.
 
-Usa a conexão configurada no DataGrip, incluindo seu fluxo de credenciais, SSH e TLS. Cria uma sessão gerenciada para a operação e a libera ao terminar. Não faz commit ou rollback de consoles existentes. Respeita somente leitura no IDE e no servidor.
+Run build.ps1 with optional LocalIdePath, JdkPath and ArtifactDirectory arguments. Tests, structural checks and packaging run before the script copies the exact current ZIP and SHA-256 to artifacts/datagrip in the main checkout, including when building from a worktree. That folder is Git-ignored. Current package: server-management-0.4.0.zip. Older install packages are archived.
 
-A gestão precisa de leitura de mysql.user, SHOW GRANTS e, em MySQL 8, das tabelas de roles/defaults, além dos privilégios necessários a cada mudança. Informação indisponível não é tratada como permissão vazia. MySQL 5.7 não oferece roles; capacidades são detectadas. MariaDB não é alvo de homologação desta versão.
+Install the ZIP without extracting it using Settings > Plugins > gear > Install Plugin from Disk, then restart when requested. The plugin ID remains io.github.lucasbp.datagrip-toolkit, so this updates the previous installation. The display name and vendor are Server Management and Lucas Passos. The package is not Marketplace-signed.
 
-Os statements têm timeout de 30 segundos quando suportado pelo driver. O estabelecimento inicial da conexão e o prompt de senha seguem o SDK do DataGrip. Interrupção da espera ou timeout não comprovam rollback ou cancelamento no servidor. Leituras têm limite de 10.000 linhas e 16 Mi caracteres, com erro explícito ao exceder.
-
-Alvo de compilação e verificação: DataGrip 2026.2.6.1, build 262.11879.103, Java 25. Faixa declarada somente linha 262 a partir de 262.11879. Não declara suporte a outros IDEs ou outras linhas nesta versão.
-
-## Pacote e pipeline
-
-O ZIP e o SHA-256 ficam em `artifacts/datagrip` na raiz do projeto, inclusive quando o build roda numa worktree. Essa pasta é ignorada pelo Git. O pacote atual se chama `server-management-0.3.3.zip` e é gerado localmente. A pipeline atualizada publicará o asset quando uma tag correspondente for enviada e passar pelas verificações.
-
-Instale no DataGrip em Settings, Plugins, engrenagem, Install Plugin from Disk. Selecione o ZIP do plugin e reinicie se solicitado. A Tool Window chama-se Server Management. O plugin tem ícone de servidor com engrenagem em SVG, com variações para temas claro e escuro, incluindo a barra do Database Explorer e o gerenciador de plugins. O pacote inicial não tem assinatura Marketplace.
-
-`build.ps1` usa o Gradle Wrapper 9.8.2 com checksum da distribuição, testa, verifica estrutura e empacota. Aceita LocalIdePath, JdkPath e ArtifactDirectory sem mudar a configuração global da máquina. O wrapper original inclui sua licença no JAR.
-
-O workflow `.github/workflows/plugin.yml` roda em PR ou push para main quando o módulo muda, em tags `datagrip-v*` e por disparo manual. Testa, verifica a compatibilidade binária e entrega ZIP, checksum e relatórios. Tags compatíveis com a versão do build publicam o ZIP exato e seu checksum em uma Release de homologação. Falha em teste ou verificação impede a publicação. Não publica no Marketplace.
-
-## Estado da entrega
-
-Veja [docs/VALIDATION.md](docs/VALIDATION.md) para resultados e limites dos testes. Não houve acesso a MySQL/Aurora real nem instalação no DataGrip de uso diário nesta implementação. A prévia visual usa Swing com dados fictícios; no aplicativo o painel acompanha o tema do DataGrip.
+The workflow tests, packages and verifies compatibility. A matching datagrip-v* tag publishes the installable ZIP and checksum as a prerelease asset. This 0.4.0 package is currently local; it has not been published to GitHub in this iteration. See [validation](docs/VALIDATION.md) for current evidence and limits.

@@ -13,9 +13,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
-public final class ManageAccountsAction extends AnAction implements DumbAware {
+public class ManageAccountsAction extends AnAction implements DumbAware {
+    private final int section;
     public ManageAccountsAction() {
-        super("Server Management: usuários e permissões", "Administrar a conexão selecionada na área central", ToolkitIcons.TOOLKIT);
+        this("Server Management", 0);
+    }
+
+    protected ManageAccountsAction(String name, int section) {
+        super(name, "Manage the selected connection in the central editor", ToolkitIcons.TOOLKIT);
+        this.section = section;
     }
 
     @Override public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.BGT; }
@@ -43,10 +49,14 @@ public final class ManageAccountsAction extends AnAction implements DumbAware {
         }).expireWith(project).finishOnUiThread(ModalityState.defaultModalityState(), id -> {
             try {
                 var manager = project.getService(AccountManagerWindows.class);
-                if (id == null) manager.openCurrent();
-                else manager.open(id);
+                if (id == null) manager.openCurrent(section);
+                else manager.open(id, section);
             }
-            catch (IllegalArgumentException problem) { Messages.showWarningDialog(project, problem.getMessage(), "Usuários e permissões"); }
+            catch (IllegalArgumentException problem) { Messages.showWarningDialog(project, problem.getMessage(), "Users & Access"); }
         }).submit(AppExecutorUtil.getAppExecutorService());
     }
+
+    public static final class Overview extends ManageAccountsAction { public Overview() { super("Server Info", 0); } }
+    public static final class Processes extends ManageAccountsAction { public Processes() { super("Processes", 1); } }
+    public static final class Users extends ManageAccountsAction { public Users() { super("User Accounts", 2); } }
 }

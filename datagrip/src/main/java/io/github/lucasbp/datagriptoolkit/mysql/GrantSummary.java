@@ -7,6 +7,7 @@ import java.util.Objects;
 
 public final class GrantSummary {
     public record Entry(String kind, String scope, String privileges, String sourceSql) {
+        public boolean global() { return scope.matches("\\*\\s*\\.\\s*\\*"); }
     }
 
     private record Keyword(String text, int start, int end) {
@@ -16,10 +17,10 @@ public final class GrantSummary {
     }
 
     public static List<Entry> summarize(List<String> grants) {
-        Objects.requireNonNull(grants, "Informe os grants para apresentação.");
+        Objects.requireNonNull(grants, "Provide grants to display.");
         List<Entry> entries = new ArrayList<>(grants.size());
         for (String grant : grants) {
-            entries.add(summarizeOne(Objects.requireNonNull(grant, "O texto do grant não pode ser nulo.")));
+            entries.add(summarizeOne(Objects.requireNonNull(grant, "Grant text must not be null.")));
         }
         return List.copyOf(entries);
     }
@@ -56,18 +57,18 @@ public final class GrantSummary {
             if (roles.isEmpty()) {
                 return detail(source);
             }
-            return new Entry("Roles", "Conta", roles, source);
+            return new Entry("Roles", "Account", roles, source);
         }
         String privileges = source.substring(grant.end(), on.start()).strip();
         String scope = source.substring(on.end(), to.start()).strip();
         if (privileges.isEmpty() || scope.isEmpty()) {
             return detail(source);
         }
-        return new Entry("Permissão", scope, privileges, source);
+        return new Entry("Privilege", scope, privileges, source);
     }
 
     private static Entry detail(String source) {
-        return new Entry("Detalhe", "Texto original", source, source);
+        return new Entry("Details", "Original SQL", source, source);
     }
 
     private static List<Keyword> topLevelKeywords(String sql) {

@@ -17,6 +17,30 @@ import javax.swing.DefaultListCellRenderer;
 final class Forms {
     private Forms() {}
 
+    static javax.swing.JSplitPane split(JComponent left, JComponent right, int location) {
+        var split = new javax.swing.JSplitPane(javax.swing.JSplitPane.HORIZONTAL_SPLIT, left, right) {
+            @Override public void updateUI() {
+                setUI(new javax.swing.plaf.basic.BasicSplitPaneUI() {
+                    @Override public javax.swing.plaf.basic.BasicSplitPaneDivider createDefaultDivider() {
+                        return new javax.swing.plaf.basic.BasicSplitPaneDivider(this) {
+                            @Override public void paint(java.awt.Graphics graphics) {
+                                var color = javax.swing.UIManager.getColor("Panel.background");
+                                graphics.setColor(color == null ? getBackground() : color);
+                                graphics.fillRect(0, 0, getWidth(), getHeight());
+                            }
+                        };
+                    }
+                });
+            }
+        };
+        split.setBorder(BorderFactory.createEmptyBorder());
+        split.setDividerSize(6);
+        split.setContinuousLayout(true);
+        split.setResizeWeight(0);
+        split.setDividerLocation(location);
+        return split;
+    }
+
     static DefaultListCellRenderer literalRenderer() {
         var renderer = new DefaultListCellRenderer();
         renderer.putClientProperty("html.disable", Boolean.TRUE);
@@ -24,7 +48,12 @@ final class Forms {
     }
 
     static JPanel stack() {
-        var panel = new JPanel();
+        var panel = new JPanel() {
+            @Override protected void addImpl(Component component, Object constraints, int index) {
+                if (component instanceof JComponent child) child.setAlignmentX(Component.LEFT_ALIGNMENT);
+                super.addImpl(component, constraints, index);
+            }
+        };
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
         return panel;

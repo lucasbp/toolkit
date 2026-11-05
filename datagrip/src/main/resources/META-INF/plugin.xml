@@ -1,25 +1,29 @@
 <idea-plugin>
     <id>io.github.lucasbp.datagrip-toolkit</id>
     <name>Server Management</name>
-    <vendor>LucasBP</vendor>
+    <vendor>Lucas Passos</vendor>
     <description><![CDATA[Visual MySQL and Aurora account management, scoped schema and table permissions, explicit role changes and quick SELECT templates. Reuses DataGrip connections. Reviews changes before applying and reloads privileges after application when selected.]]></description>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.database</depends>
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Server Management" anchor="right" icon="/icons/toolWindowToolkit.svg" factoryClass="io.github.lucasbp.datagriptoolkit.ui.ToolkitToolWindowFactory"/>
         <fileEditorProvider implementation="io.github.lucasbp.datagriptoolkit.ui.ManagementEditorProvider"/>
+        <editorTabColorProvider implementation="io.github.lucasbp.datagriptoolkit.ui.ManagementTabColorProvider"/>
         <iconMapper mappingFile="ToolkitIconMappings.json"/>
     </extensions>
     <actions>
         <action id="LucasBP.DataGripToolkit.ManageAccounts" class="io.github.lucasbp.datagriptoolkit.ui.ManageAccountsAction">
-            <add-to-group group-id="DatabaseViewPopupMenu" anchor="last"/>
             <add-to-group group-id="DatabaseViewToolbar" anchor="last"/>
         </action>
-        <group id="LucasBP.DataGripToolkit.QuickQueries" text="Consultas rápidas" popup="true">
-            <add-to-group group-id="DatabaseViewPopupMenu" anchor="last"/>
-            <action id="LucasBP.DataGripToolkit.Select1000" class="io.github.lucasbp.datagriptoolkit.ui.QuickSelectAction" text="SELECT das primeiras 1000 linhas"/>
-            <action id="LucasBP.DataGripToolkit.SelectColumns" class="io.github.lucasbp.datagriptoolkit.ui.QuickSelectAction$Columns" text="SELECT com nomes das colunas"/>
-            <action id="LucasBP.DataGripToolkit.Count" class="io.github.lucasbp.datagriptoolkit.ui.QuickSelectAction$Count" text="Contar registros"/>
+        <group id="LucasBP.DataGripToolkit.ManagementMenu" text="Server Management" icon="/icons/toolkit.svg" popup="true" compact="true">
+            <add-to-group group-id="DatabaseViewPopupMenu" anchor="after" relative-to-action="DatabaseView.PropertiesAction"/>
+            <action id="LucasBP.DataGripToolkit.ServerInfo" class="io.github.lucasbp.datagriptoolkit.ui.ManageAccountsAction$Overview"/>
+            <action id="LucasBP.DataGripToolkit.Processes" class="io.github.lucasbp.datagriptoolkit.ui.ManageAccountsAction$Processes"/>
+            <action id="LucasBP.DataGripToolkit.Users" class="io.github.lucasbp.datagriptoolkit.ui.ManageAccountsAction$Users"/>
         </group>
+        <action id="LucasBP.DataGripToolkit.BuildSelect" class="io.github.lucasbp.datagriptoolkit.ui.ConsoleQueryAction">
+            <add-to-group group-id="Console.Jdbc.Left" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>

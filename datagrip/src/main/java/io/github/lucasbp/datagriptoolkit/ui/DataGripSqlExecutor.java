@@ -44,7 +44,7 @@ public final class DataGripSqlExecutor implements SqlExecutor {
             var metadata = result.getMetaData();
             int count = metadata.getColumnCount();
             if (count < 1 || count > 1024) {
-                throw new ResultLimitException("O resultado tem uma quantidade de colunas incompatível com esta tela.");
+                throw new ResultLimitException("The result has an unsupported column count.");
             }
             List<String> columns = new ArrayList<>(count);
             for (int column = 1; column <= count; column++) {
@@ -55,14 +55,14 @@ public final class DataGripSqlExecutor implements SqlExecutor {
             while (result.next()) {
                 checkCanceled();
                 if (rows.size() >= MAX_ROWS) {
-                    throw new ResultLimitException("O resultado excedeu 10.000 linhas. Refine a consulta antes de continuar.");
+                    throw new ResultLimitException("The result exceeded 10,000 rows. Refine the query before continuing.");
                 }
                 List<String> row = new ArrayList<>(count);
                 for (int column = 1; column <= count; column++) {
                     String value = result.getString(column);
                     characters += value == null ? 0 : value.length();
                     if (characters > MAX_RESULT_CHARACTERS) {
-                        throw new ResultLimitException("O resultado excedeu o limite de dados desta tela. Refine a consulta.");
+                        throw new ResultLimitException("The result exceeded the data limit for this screen. Refine the query.");
                     }
                     row.add(value);
                 }
@@ -93,7 +93,7 @@ public final class DataGripSqlExecutor implements SqlExecutor {
     public synchronized void execute(String sql) throws Exception {
         checkReady(sql);
         if (source.isReadOnly()) {
-            throw new IllegalStateException("A conexão está configurada como somente leitura no DataGrip.");
+            throw new IllegalStateException("The connection is read-only in DataGrip.");
         }
         RemoteStatement statement = null;
         try {
@@ -148,7 +148,7 @@ public final class DataGripSqlExecutor implements SqlExecutor {
             try {
                 reference.close();
             } catch (RuntimeException exception) {
-                throw new IllegalStateException("Não foi possível confirmar o encerramento da sessão dedicada no DataGrip.");
+                throw new IllegalStateException("Could not confirm that the dedicated DataGrip session was closed.");
             }
         }
     }
@@ -156,10 +156,21 @@ public final class DataGripSqlExecutor implements SqlExecutor {
     private RemoteStatement createStatement() throws Exception {
         checkCanceled();
         if (connection == null) {
-            connection = DatabaseConnectionManager.getInstance()
+            var builder = DatabaseConnectionManager.getInstance()
                     .build(project, source)
-                    .setAskPassword(true)
-                    .createBlocking();
+                    .setAskPassword(true);
+            if (ProgressManager.getInstance().getProgressIndicator() != null) connection = builder.createBlocking();
+            else {
+                try {
+                    connection = ProgressManager.getInstance().runProcess(() -> {
+                        try { return builder.createBlocking(); }
+                        catch (SQLException problem) { throw new java.util.concurrent.CompletionException(problem); }
+                    }, new com.intellij.openapi.progress.EmptyProgressIndicator());
+                } catch (java.util.concurrent.CompletionException problem) {
+                    if (problem.getCause() instanceof SQLException sql) throw sql;
+                    throw problem;
+                }
+            }
         }
         checkCanceled();
         RemoteStatement statement = connection.get().getRemoteConnection().createStatement();
@@ -176,37 +187,37 @@ public final class DataGripSqlExecutor implements SqlExecutor {
 
     private void checkReady(String sql) throws InterruptedException {
         if (SwingUtilities.isEventDispatchThread()) {
-            throw new IllegalStateException("A operação SQL deve executar em segundo plano.");
+            throw new IllegalStateException("SQL operations must run in the background.");
         }
         if (closed || project.isDisposed()) {
-            throw new IllegalStateException("A sessão de banco foi encerrada.");
+            throw new IllegalStateException("The database session was closed.");
         }
         if (!LocalDataSourceManager.getInstance(project).getDataSources().contains(source)) {
-            throw new IllegalStateException("A conexão foi removida do DataGrip. Atualize a lista.");
+            throw new IllegalStateException("The connection was removed from DataGrip. Refresh the list.");
         }
         if (sql == null || sql.isBlank()) {
-            throw new IllegalArgumentException("Informe o comando SQL.");
+            throw new IllegalArgumentException("Enter a SQL statement.");
         }
         checkCanceled();
     }
 
     private static void checkCanceled() throws InterruptedException {
         if (Thread.currentThread().isInterrupted()) {
-            throw new InterruptedException("A espera foi interrompida. Confirme o estado no banco antes de repetir a operação.");
+            throw new InterruptedException("The wait was interrupted. Verify the database state before retrying.");
         }
         ProgressManager.checkCanceled();
     }
 
     private static SQLException sanitized(SQLException exception) {
         String state = exception.getSQLState();
-        String safeState = state != null && state.matches("[A-Za-z0-9]{5}") ? state : "indisponível";
-        return new SQLException("O banco recusou a operação. Código " + exception.getErrorCode()
-                + ", SQLState " + safeState + ". Confira permissões e o estado atual antes de repetir.",
+        String safeState = state != null && state.matches("[A-Za-z0-9]{5}") ? state : "unavailable";
+        return new SQLException("The database rejected the operation. Code " + exception.getErrorCode()
+                + ", SQLState " + safeState + ". Check privileges and the current state before retrying.",
                 state != null && state.matches("[A-Za-z0-9]{5}") ? state : null, exception.getErrorCode());
     }
 
     private static SQLException connectionFailure() {
-        return new SQLException("A comunicação com a conexão do DataGrip falhou. Confira a conexão e o estado atual no banco antes de repetir a operação.");
+        return new SQLException("Communication with the DataGrip connection failed. Check the connection and database state before retrying.");
     }
 
     private static final class ResultLimitException extends IllegalStateException {

@@ -48,7 +48,7 @@ public final class MySqlAccountService {
 
     public record Action(ActionType type, MySqlAccount role, String schema, String table, Privilege privilege) {
         public Action {
-            Objects.requireNonNull(type, "Tipo de ação obrigatório.");
+            Objects.requireNonNull(type, "An action type is required.");
         }
 
         public static Action grantRole(MySqlAccount role) {
@@ -108,34 +108,34 @@ public final class MySqlAccountService {
         var empty = new SqlExecutor.QueryResult(List.of(), List.of());
         try {
             var info = serverInfo();
-            if (info.readOnly()) return new CreationResult(empty, false, false, "Conexão ou servidor está em somente leitura.");
+            if (info.readOnly()) return new CreationResult(empty, false, false, "The connection or server is read-only.");
             if (role && !info.rolesSupported()) {
-                return new CreationResult(empty, false, false, "Servidor não suporta roles MySQL.");
+                return new CreationResult(empty, false, false, "This server does not support MySQL roles.");
             }
             if (!role && !supportsRandomPassword(info.version())) {
-                return new CreationResult(empty, false, false, "Senha gerada pelo servidor exige MySQL 8.0.18 ou superior.");
+                return new CreationResult(empty, false, false, "Server-generated passwords require MySQL 8.0.18 or later.");
             }
             if (listAccounts().stream().anyMatch(existing -> sameIdentity(existing.account(), account))) {
-                return new CreationResult(empty, false, false, "Conta já existe. Recarregue a lista para editá-la.");
+                return new CreationResult(empty, false, false, "The account already exists. Reload the list to edit it.");
             }
         } catch (Exception problem) {
-            return new CreationResult(empty, false, false, safeError(problem, "Não foi possível verificar servidor e contas. Nenhum comando de criação foi enviado."));
+            return new CreationResult(empty, false, false, safeError(problem, "Could not verify the server and accounts. No create command was sent."));
         }
         SqlExecutor.QueryResult result = empty;
         try {
             if (role) executor.execute(sql);
             else result = executor.query(sql);
         } catch (Exception problem) {
-            return new CreationResult(empty, false, false, safeError(problem, "Não foi possível confirmar a criação. Recarregue as contas antes de tentar novamente."));
+            return new CreationResult(empty, false, false, safeError(problem, "Could not confirm account creation. Reload accounts before retrying."));
         }
         if (result == null) result = empty;
         String warning = !role && result.rows().isEmpty()
-                ? "Conta criada, mas o resultado da senha não foi retornado pelo driver." : "";
+                ? "The account was created but the driver did not return the generated password." : "";
         if (flush) {
             try {
                 executor.execute("FLUSH PRIVILEGES;");
             } catch (Exception problem) {
-                String error = safeError(problem, "Conta criada, mas FLUSH PRIVILEGES falhou. Não repita a criação.");
+                String error = safeError(problem, "The account was created but FLUSH PRIVILEGES failed. Do not repeat account creation.");
                 if (!warning.isEmpty()) error += " " + warning;
                 return new CreationResult(result, true, false, error);
             }
@@ -146,7 +146,7 @@ public final class MySqlAccountService {
     public ServerInfo serverInfo() throws Exception {
         var rows = executor.query("SELECT VERSION() AS version, @@read_only AS read_only").rows();
         if (rows.size() != 1 || rows.getFirst().size() < 2 || rows.getFirst().get(0) == null) {
-            throw new IllegalStateException("Não foi possível identificar versão e estado de leitura do servidor.");
+            throw new IllegalStateException("Could not determine the server version and read-only state.");
         }
         String version = rows.getFirst().getFirst();
         var match = VERSION.matcher(version);
@@ -157,7 +157,7 @@ public final class MySqlAccountService {
         try {
             var setting = executor.query("SELECT @@partial_revokes AS partial_revokes").rows();
             if (setting.size() != 1 || setting.getFirst().isEmpty()) {
-                throw new IllegalStateException("Estado de partial_revokes indisponível.");
+                throw new IllegalStateException("The partial_revokes setting is unavailable.");
             }
             partialRevokes = flag(setting.getFirst().getFirst());
         } catch (SQLException error) {
@@ -170,7 +170,7 @@ public final class MySqlAccountService {
         var result = executor.query("SELECT User, Host, account_locked FROM mysql.user ORDER BY User, Host");
         var accounts = new ArrayList<AccountEntry>();
         for (var row : result.rows()) {
-            if (row.size() < 3) throw new IllegalStateException("Resposta incompleta ao listar contas.");
+            if (row.size() < 3) throw new IllegalStateException("The account list response is incomplete.");
             accounts.add(new AccountEntry(new MySqlAccount(row.get(0), row.get(1)), flag(row.get(2))));
         }
         return List.copyOf(accounts);
@@ -184,7 +184,7 @@ public final class MySqlAccountService {
             if (row.isEmpty() || row.getFirst() == null) throw new IllegalStateException("Resposta incompleta ao ler grants.");
             grants.add(row.getFirst());
         }
-        if (grants.isEmpty()) throw new IllegalStateException("Nenhum grant retornado; estado da conta desconhecido.");
+        if (grants.isEmpty()) throw new IllegalStateException("No grants returned; the account state is unknown.");
         var roles = List.<MySqlAccount>of();
         var defaults = List.<MySqlAccount>of();
         boolean complete = !info.rolesSupported();
@@ -207,12 +207,12 @@ public final class MySqlAccountService {
     public Plan prepare(Snapshot snapshot, List<Action> actions) {
         Objects.requireNonNull(snapshot);
         Objects.requireNonNull(actions);
-        if (snapshot.serverInfo().readOnly()) throw new IllegalArgumentException("Conexão ou servidor está em somente leitura.");
-        if (snapshot.grants().isEmpty()) throw new IllegalArgumentException("Leia os grants da conta antes de preparar alterações.");
-        if (!snapshot.rolesComplete()) throw new IllegalArgumentException("Estado de roles incompleto. Recarregue com permissão para consultar roles e roles padrão.");
-        if (actions.isEmpty()) throw new IllegalArgumentException("Selecione ao menos uma alteração.");
+        if (snapshot.serverInfo().readOnly()) throw new IllegalArgumentException("The connection or server is read-only.");
+        if (snapshot.grants().isEmpty()) throw new IllegalArgumentException("Read the account grants before preparing changes.");
+        if (!snapshot.rolesComplete()) throw new IllegalArgumentException("Role information is incomplete. Reload with permission to read role grants and defaults.");
+        if (actions.isEmpty()) throw new IllegalArgumentException("Select at least one change.");
         var statements = compile(snapshot, actions);
-        if (statements.isEmpty()) throw new IllegalArgumentException("Nenhuma alteração efetiva foi selecionada.");
+        if (statements.isEmpty()) throw new IllegalArgumentException("No effective change was selected.");
         return new Plan(snapshot, actions, statements);
     }
 
@@ -228,12 +228,12 @@ public final class MySqlAccountService {
         Snapshot refreshed = null;
         try {
             refreshed = snapshot(plan.snapshot().account());
-            if (refreshed.serverInfo().readOnly()) throw new IllegalStateException("Conexão em somente leitura.");
-            if (!equivalent(plan.snapshot(), refreshed)) throw new IllegalStateException("Estado da conta mudou. Recarregue e revise o plano.");
+            if (refreshed.serverInfo().readOnly()) throw new IllegalStateException("The connection is read-only.");
+            if (!equivalent(plan.snapshot(), refreshed)) throw new IllegalStateException("The account changed. Reload and review the plan.");
             var checked = prepare(refreshed, plan.actions());
-            if (!checked.statements().equals(plan.statements())) throw new IllegalStateException("Plano mudou. Gere nova revisão.");
+            if (!checked.statements().equals(plan.statements())) throw new IllegalStateException("The plan changed. Review the changes again.");
         } catch (Exception problem) {
-            return new ApplyResult(0, "preflight", "O estado da conta ou da conexão mudou, ficou incompleto ou não pôde ser verificado. Recarregue antes de aplicar.", refreshed);
+            return new ApplyResult(0, "preflight", "The account or connection state changed, is incomplete or could not be verified. Reload before applying.", refreshed);
         }
         try {
             for (var statement : plan.statements()) {
@@ -242,7 +242,7 @@ public final class MySqlAccountService {
             }
         } catch (Exception problem) {
             failure = "statement";
-            error = safeError(problem, "Falha na alteração " + (completed + 1) + ". As anteriores podem ter sido aplicadas.");
+            error = safeError(problem, "Failed at change " + (completed + 1) + ". Earlier changes may have been applied.");
         }
         if (completed > 0 && flushPrivileges) {
             try {
@@ -250,9 +250,9 @@ public final class MySqlAccountService {
             } catch (Exception problem) {
                 if (failure.isEmpty()) {
                     failure = "flush";
-                    error = safeError(problem, "As alterações foram executadas, mas FLUSH PRIVILEGES falhou.");
+                    error = safeError(problem, "Changes were applied but FLUSH PRIVILEGES failed.");
                 } else {
-                    error += " " + safeError(problem, "FLUSH PRIVILEGES também falhou.");
+                    error += " " + safeError(problem, "FLUSH PRIVILEGES also failed.");
                 }
             }
         }
@@ -262,9 +262,9 @@ public final class MySqlAccountService {
             refreshed = null;
             if (failure.isEmpty()) {
                 failure = "refresh";
-                error = safeError(problem, "Alterações executadas, mas não foi possível reler o estado da conta.");
+                error = safeError(problem, "Changes were applied but the account state could not be reloaded.");
             } else {
-                error += " Não foi possível reler o estado da conta.";
+                error += " Could not reload the account state.";
             }
         }
         return new ApplyResult(completed, failure, error, refreshed);
@@ -279,9 +279,9 @@ public final class MySqlAccountService {
             switch (action.type()) {
                 case GRANT_ROLE, REVOKE_ROLE, ADD_DEFAULT_ROLE, REMOVE_DEFAULT_ROLE -> {
                     if (!snapshot.serverInfo().rolesSupported() || !snapshot.rolesComplete()) {
-                        throw new IllegalArgumentException("Estado de roles indisponível. Recarregue com permissão de leitura das roles.");
+                        throw new IllegalArgumentException("Role information is unavailable. Reload with permission to read roles.");
                     }
-                    Objects.requireNonNull(action.role(), "Role obrigatória.");
+                    Objects.requireNonNull(action.role(), "A role is required.");
                     if (action.type() == ActionType.GRANT_ROLE) {
                         if (assigned.add(action.role())) sql.add(MySqlAccessPlanner.grantRole(action.role(), snapshot.account()));
                     } else if (action.type() == ActionType.REVOKE_ROLE) {
@@ -290,7 +290,7 @@ public final class MySqlAccountService {
                             defaults.remove(action.role());
                         }
                     } else if (action.type() == ActionType.ADD_DEFAULT_ROLE) {
-                        if (!assigned.contains(action.role())) throw new IllegalArgumentException("Conceda a role antes de torná-la padrão.");
+                        if (!assigned.contains(action.role())) throw new IllegalArgumentException("Grant the role before making it a default role.");
                         var statement = MySqlAccessPlanner.addDefaultRole(snapshot.account(), defaults, action.role(), true);
                         if (!statement.isEmpty()) sql.add(statement);
                         defaults.add(action.role());
@@ -300,10 +300,10 @@ public final class MySqlAccountService {
                     }
                 }
                 case GRANT_PRIVILEGE, REVOKE_PRIVILEGE -> {
-                    Objects.requireNonNull(action.privilege(), "Privilégio obrigatório.");
+                    Objects.requireNonNull(action.privilege(), "A privilege is required.");
                     String scope = scope(action.schema(), action.table(), snapshot.serverInfo().partialRevokes());
                     if (action.privilege() == Privilege.EXECUTE && action.table() != null) {
-                        throw new IllegalArgumentException("EXECUTE deve ser concedido no schema; routines não são tabelas.");
+                        throw new IllegalArgumentException("Grant EXECUTE at schema scope; routines are not tables.");
                     }
                     String verb = action.type() == ActionType.GRANT_PRIVILEGE ? "GRANT " : "REVOKE ";
                     String target = action.type() == ActionType.GRANT_PRIVILEGE ? " TO " : " FROM ";
@@ -317,9 +317,9 @@ public final class MySqlAccountService {
     private static String scope(String schema, String table, Boolean partialRevokes) {
         String schemaSql = MySqlNames.identifier(schema);
         if (table != null) return schemaSql + "." + MySqlNames.identifier(table);
-        if (schema.indexOf('\\') >= 0) throw new IllegalArgumentException("Selecione tabela específica para schema com contrabarra.");
+        if (schema.indexOf('\\') >= 0) throw new IllegalArgumentException("Select a specific table for a schema containing a backslash.");
         if (schema.indexOf('%') >= 0 || schema.indexOf('_') >= 0) {
-            if (partialRevokes == null) throw new IllegalArgumentException("Estado de partial_revokes desconhecido; selecione tabela específica.");
+            if (partialRevokes == null) throw new IllegalArgumentException("The partial_revokes setting is unknown. Select a specific table.");
             if (!partialRevokes) schemaSql = MySqlNames.quote(schema.replace("_", "\\_").replace("%", "\\%"));
         }
         return schemaSql + ".*";
@@ -355,7 +355,7 @@ public final class MySqlAccountService {
         return switch (value.toUpperCase(Locale.ROOT)) {
             case "1", "Y", "YES", "ON", "TRUE" -> true;
             case "0", "N", "NO", "OFF", "FALSE" -> false;
-            default -> throw new IllegalStateException("Estado booleano inválido.");
+            default -> throw new IllegalStateException("Invalid boolean state.");
         };
     }
 

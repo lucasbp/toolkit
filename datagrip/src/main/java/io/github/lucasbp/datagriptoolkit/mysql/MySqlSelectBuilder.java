@@ -26,11 +26,11 @@ public final class MySqlSelectBuilder {
 
     public static String build(String schema, String table, List<String> columns, List<Filter> filters,
                                List<Order> orders, int limit) {
-        Objects.requireNonNull(columns, "Colunas obrigatórias.");
-        Objects.requireNonNull(filters, "Filtros obrigatórios.");
-        Objects.requireNonNull(orders, "Ordenação obrigatória.");
+        Objects.requireNonNull(columns, "Columns are required.");
+        Objects.requireNonNull(filters, "Filters are required.");
+        Objects.requireNonNull(orders, "Ordering is required.");
         if (limit < 1 || limit > 2000) {
-            throw new IllegalArgumentException("Limite deve estar entre 1 e 2000.");
+            throw new IllegalArgumentException("The limit must be between 1 and 2000.");
         }
         String columnSql = columns.isEmpty() || columns.equals(List.of("*")) ? "*"
                 : columns.stream().map(MySqlNames::identifier).collect(Collectors.joining(", "));
@@ -47,6 +47,11 @@ public final class MySqlSelectBuilder {
         return sql + "\nLIMIT " + limit + ";";
     }
 
+    public static String count(String schema, String table, List<Filter> filters) {
+        String rows = build(schema, table, List.of(), filters, List.of(), 1);
+        return "SELECT COUNT(*)" + rows.substring("SELECT *".length(), rows.length() - "\nLIMIT 1;".length()) + ";";
+    }
+
     private static String literal(Object value) {
         if (value == null) {
             return "NULL";
@@ -60,6 +65,6 @@ public final class MySqlSelectBuilder {
         if (value instanceof Boolean bool) {
             return bool ? "TRUE" : "FALSE";
         }
-        throw new IllegalArgumentException("Filtro aceita apenas texto, BigDecimal, boolean ou null.");
+        throw new IllegalArgumentException("Filters accept only text, BigDecimal, boolean or null.");
     }
 }

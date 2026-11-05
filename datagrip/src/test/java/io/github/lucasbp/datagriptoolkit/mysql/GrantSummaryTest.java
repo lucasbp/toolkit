@@ -11,7 +11,7 @@ class GrantSummaryTest {
     void summarizesPrivilegesAndPreservesSql() {
         String sql = "  GRANT SELECT, INSERT, UPDATE ON `sales`.* TO `reader`@`%` WITH GRANT OPTION  ";
         GrantSummary.Entry entry = GrantSummary.summarize(List.of(sql)).getFirst();
-        assertEquals("Permissão", entry.kind());
+        assertEquals("Privilege", entry.kind());
         assertEquals("`sales`.*", entry.scope());
         assertEquals("SELECT, INSERT, UPDATE", entry.privileges());
         assertEquals(sql, entry.sourceSql());
@@ -21,7 +21,7 @@ class GrantSummaryTest {
     void doesNotSplitOnKeywordsInsideBackticksOrColumnLists() {
         String sql = "GRANT SELECT (`column ON TO`, `other``TO`), UPDATE (`ON`) ON `schema ON main`.`table TO all` TO `user TO ON`@`%`";
         GrantSummary.Entry entry = GrantSummary.summarize(List.of(sql)).getFirst();
-        assertEquals("Permissão", entry.kind());
+        assertEquals("Privilege", entry.kind());
         assertEquals("`schema ON main`.`table TO all`", entry.scope());
         assertEquals("SELECT (`column ON TO`, `other``TO`), UPDATE (`ON`)", entry.privileges());
         assertEquals(sql, entry.sourceSql());
@@ -33,7 +33,7 @@ class GrantSummaryTest {
         String sql = "GRANT " + roles + " TO `person`@`%`";
         GrantSummary.Entry entry = GrantSummary.summarize(List.of(sql)).getFirst();
         assertEquals("Roles", entry.kind());
-        assertEquals("Conta", entry.scope());
+        assertEquals("Account", entry.scope());
         assertEquals(roles, entry.privileges());
         assertEquals(sql, entry.sourceSql());
     }
@@ -68,8 +68,8 @@ class GrantSummaryTest {
     })
     void preservesUnknownFormatsAsDetails(String sql) {
         GrantSummary.Entry entry = GrantSummary.summarize(List.of(sql)).getFirst();
-        assertEquals("Detalhe", entry.kind());
-        assertEquals("Texto original", entry.scope());
+        assertEquals("Details", entry.kind());
+        assertEquals("Original SQL", entry.scope());
         assertEquals(sql, entry.privileges());
         assertEquals(sql, entry.sourceSql());
     }

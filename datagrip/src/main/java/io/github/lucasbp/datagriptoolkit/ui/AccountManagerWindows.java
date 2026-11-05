@@ -19,7 +19,7 @@ import java.util.Map;
 @Service(Service.Level.PROJECT)
 public final class AccountManagerWindows implements Disposable {
     private final Project project;
-    private final Map<String, ManagementFile> files = new HashMap<>();
+    private ManagementFile file;
     private boolean managing;
     private boolean restoreServices;
 
@@ -33,6 +33,10 @@ public final class AccountManagerWindows implements Disposable {
     }
 
     void openCurrent() {
+        openCurrent(-1);
+    }
+
+    void openCurrent(int section) {
         String id = ReadAction.computeBlocking(() -> {
             String explorer = null;
             var view = DatabaseView.getDatabaseViewIfVisible(project);
@@ -42,22 +46,29 @@ public final class AccountManagerWindows implements Disposable {
             }
             String console = null;
             var editor = FileEditorManager.getInstance(project).getSelectedEditor();
-            if (editor instanceof ManagementFileEditor management) return ConnectionContext.resolve(explorer, management.getFile().connectionId);
+            if (editor instanceof ManagementFileEditor management) return ConnectionContext.resolve(explorer, management.connectionId());
             if (editor != null && editor.getFile() != null) {
                 var jdbc = JdbcConsoleProvider.getConsole(project, editor.getFile());
                 if (jdbc != null && jdbc.getDataSource() != null && SqlConsoleBridge.supports(jdbc.getDataSource())) console = jdbc.getDataSource().getUniqueId();
             }
             return ConnectionContext.resolve(explorer, console);
         });
-        open(id);
+        open(id, section);
     }
 
     void open(String id) {
+        open(id, -1);
+    }
+
+    void open(String id, int section) {
         var bridge = new SqlConsoleBridge(project);
-        String key = id == null ? "" : id;
-        String title = id == null ? "Server Management" : "Management · " + bridge.source(id).source().getName();
-        var file = files.computeIfAbsent(key, ignored -> new ManagementFile(title, id));
-        FileEditorManager.getInstance(project).openFile(file, true);
+        if (id != null) bridge.source(id);
+        if (file == null) file = new ManagementFile("Server Management", null);
+        var editors = FileEditorManager.getInstance(project).openFile(file, true);
+        for (var editor : editors) if (editor instanceof ManagementFileEditor management) {
+            management.selectConnection(id);
+            management.showSection(section);
+        }
         var launcher = ToolWindowManager.getInstance(project).getToolWindow("Server Management");
         if (launcher != null && launcher.isVisible()) launcher.hide();
     }
@@ -80,5 +91,5 @@ public final class AccountManagerWindows implements Disposable {
         });
     }
 
-    @Override public void dispose() { files.clear(); }
+    @Override public void dispose() { file = null; }
 }

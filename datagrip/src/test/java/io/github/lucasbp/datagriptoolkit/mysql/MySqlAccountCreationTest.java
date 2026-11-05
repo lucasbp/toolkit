@@ -69,7 +69,7 @@ class MySqlAccountCreationTest {
         var result = new MySqlAccountService(executor).createAccount(account, false, true);
         assertTrue(result.created());
         assertFalse(result.flushSucceeded());
-        assertTrue(result.errorMessage().contains("Não repita a criação"));
+        assertTrue(result.errorMessage().contains("Do not repeat account creation"));
         assertFalse(result.errorMessage().contains("sensitive"));
         assertEquals("server-generated-secret", result.result().rows().getFirst().get(2));
         assertEquals(2, executor.mutations.size());
@@ -82,8 +82,8 @@ class MySqlAccountCreationTest {
         var result = new MySqlAccountService(executor).createAccount(account, false, true);
         assertFalse(result.created());
         assertFalse(result.flushSucceeded());
-        assertTrue(result.errorMessage().contains("Não foi possível confirmar"));
-        assertTrue(result.errorMessage().contains("Recarregue"));
+        assertTrue(result.errorMessage().contains("Could not confirm"));
+        assertTrue(result.errorMessage().contains("Reload"));
         assertFalse(result.errorMessage().contains("sensitive"));
         assertEquals(1, executor.mutations.size());
     }
@@ -94,7 +94,7 @@ class MySqlAccountCreationTest {
         executor.denyList = true;
         var result = new MySqlAccountService(executor).createAccount(account, false, true);
         assertFalse(result.created());
-        assertTrue(result.errorMessage().contains("Nenhum comando de criação foi enviado"));
+        assertTrue(result.errorMessage().contains("No create command was sent"));
         assertTrue(executor.mutations.isEmpty());
     }
 
@@ -118,7 +118,7 @@ class MySqlAccountCreationTest {
         var result = new MySqlAccountService(executor).createAccount(account, false, true);
         assertTrue(result.created());
         assertTrue(result.flushSucceeded());
-        assertTrue(result.errorMessage().contains("resultado da senha não foi retornado"));
+        assertTrue(result.errorMessage().contains("driver did not return the generated password"));
         assertEquals(2, executor.mutations.size());
     }
 

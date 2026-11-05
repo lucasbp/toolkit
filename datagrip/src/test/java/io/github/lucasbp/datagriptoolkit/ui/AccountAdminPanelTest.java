@@ -70,22 +70,22 @@ class AccountAdminPanelTest {
             loadUser(panel);
             onEdt(() -> {
                 table(panel).setValueAt(true, 0, 1);
-                click(panel, "Revisar alterações");
+                click(panel, "Review changes");
                 return null;
             });
             awaitIdle(panel);
             onEdt(() -> {
-                assertTrue(button(panel, "Aplicar alterações").isEnabled());
+                assertTrue(button(panel, "Apply changes").isEnabled());
                 assertTrue(field(panel, "preview", JTextArea.class).getText().contains("GRANT " + role.sql() + " TO " + user.sql()));
-                click(panel, "Aplicar alterações");
+                click(panel, "Apply changes");
                 return null;
             });
             awaitIdle(panel);
             assertEquals(List.of("GRANT " + role.sql() + " TO " + user.sql() + ";", "FLUSH PRIVILEGES;"), backend.executed);
             onEdt(() -> {
                 assertTrue(Boolean.TRUE.equals(table(panel).getValueAt(0, 1)));
-                assertFalse(button(panel, "Aplicar alterações").isEnabled());
-                assertTrue(field(panel, "status", javax.swing.JTextArea.class).getText().contains("FLUSH concluído"));
+                assertFalse(button(panel, "Apply changes").isEnabled());
+                assertTrue(field(panel, "status", javax.swing.JTextArea.class).getText().contains("FLUSH completed"));
                 return null;
             });
         } finally {
@@ -101,13 +101,13 @@ class AccountAdminPanelTest {
             loadUser(panel);
             onEdt(() -> {
                 table(panel).setValueAt(true, 0, 1);
-                click(panel, "Revisar alterações");
+                click(panel, "Review changes");
                 return null;
             });
             awaitIdle(panel);
             onEdt(() -> {
                 field(panel, "connections", JComboBox.class).setSelectedIndex(1);
-                assertFalse(button(panel, "Aplicar alterações").isEnabled());
+                assertFalse(button(panel, "Apply changes").isEnabled());
                 assertEquals("", field(panel, "preview", JTextArea.class).getText());
                 assertEquals(0, field(panel, "accounts", JList.class).getModel().getSize());
                 return null;
@@ -129,8 +129,8 @@ class AccountAdminPanelTest {
                 loadUser(panel);
                 onEdt(() -> {
                     assertFalse(table(panel).isCellEditable(0, 1));
-                    assertFalse(button(panel, "Aplicar alterações").isEnabled());
-                    assertTrue(field(panel, "status", javax.swing.JTextArea.class).getText().contains("bloqueada"));
+                    assertFalse(button(panel, "Apply changes").isEnabled());
+                    assertTrue(field(panel, "status", javax.swing.JTextArea.class).getText().contains("blocked"));
                     return null;
                 });
                 assertTrue(backend.executed.isEmpty());
@@ -150,8 +150,8 @@ class AccountAdminPanelTest {
                 field(panel, "scope", JComboBox.class).setSelectedIndex(1);
                 field(panel, "schemas", JComboBox.class).setSelectedItem("nuria_data");
                 field(panel, "tables", JComboBox.class).setSelectedItem("users");
-                click(panel, "Conceder permissão");
-                click(panel, "Revisar alterações");
+                click(panel, "Grant privilege");
+                click(panel, "Review changes");
                 return null;
             });
             awaitIdle(panel);
@@ -176,7 +176,7 @@ class AccountAdminPanelTest {
             onEdt(() -> {
                 table(panel).setValueAt(true, 0, 1);
                 descendants(panel, JTabbedPane.class).getFirst().setSelectedIndex(1);
-                click(panel, "Revisar alterações");
+                click(panel, "Review changes");
                 return null;
             });
             awaitIdle(panel);
@@ -214,7 +214,7 @@ class AccountAdminPanelTest {
     private void loadUser(AccountAdminPanel panel) throws Exception {
         onEdt(() -> {
             field(panel, "connections", JComboBox.class).setSelectedIndex(0);
-            click(panel, "Carregar usuários");
+            click(panel, "Load users");
             return null;
         });
         awaitIdle(panel);

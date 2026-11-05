@@ -45,14 +45,14 @@ class AccountIdentityReviewRegressionTest {
                 showSnapshot.invoke(panel, baseline);
                 setField(panel, "identityPlan", plan);
                 ((JTextArea) field(panel, "preview")).setText(String.join("\n", plan.statements()));
-                button(panel, "Aplicar alterações").setEnabled(true);
-                button(panel, "Revisar alterações").doClick(0);
+                button(panel, "Apply changes").setEnabled(true);
+                button(panel, "Review changes").doClick(0);
                 return null;
             });
             awaitIdle(panel);
             onEdt(() -> {
                 assertNotNull(field(panel, "identityPlan"), "Revisar deve manter o plano de edição de usuário");
-                assertTrue(button(panel, "Aplicar alterações").isEnabled());
+                assertTrue(button(panel, "Apply changes").isEnabled());
                 assertTrue(((JTextArea) field(panel, "preview")).getText().contains("RENAME USER " + old.sql() + " TO " + target.sql()));
                 return null;
             });

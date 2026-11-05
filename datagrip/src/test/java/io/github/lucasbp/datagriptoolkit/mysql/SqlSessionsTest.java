@@ -43,7 +43,7 @@ class SqlSessionsTest {
         assertSame(password, result.value());
         assertEquals("generated-secret", result.value().rows().getFirst().getFirst());
         assertFalse(result.cleanupWarning().isEmpty());
-        assertTrue(result.cleanupWarning().contains("Não repita"));
+        assertTrue(result.cleanupWarning().contains("Do not repeat"));
         assertFalse(result.cleanupWarning().contains("sensitive"));
         assertFalse(result.toString().contains("generated-secret"));
         assertEquals(1, executor.closeCount);
