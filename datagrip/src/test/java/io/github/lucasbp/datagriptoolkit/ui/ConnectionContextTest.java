@@ -12,8 +12,8 @@ class ConnectionContextTest {
         assertEquals("testing", ConnectionContext.resolve(null, "testing"));
     }
 
-    @Test void conflictingExplorerAndConsoleConnectionsRequireAnExplicitChoice() {
-        assertNull(ConnectionContext.resolve("production", "testing"));
+    @Test void nativeExplorerSelectionTakesPriorityOverTheOpenConsole() {
+        assertEquals("production", ConnectionContext.resolve("production", "testing"));
         assertEquals("production", ConnectionContext.resolve("production", "production"));
     }
 

@@ -11,25 +11,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class ConnectionWorkspaceTest {
     private static AccountAdminPanel.ConnectionChoice choice(String id, String name) { return new AccountAdminPanel.ConnectionChoice(id, name); }
 
-    @Test void filteringDoesNotOpenAConnectionAndIgnoresCaseAndAccents() throws Exception {
+    @Test void usesTheNativeExplorerWithoutRenderingAnotherConnectionSelector() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             var opened = new ArrayList<String>();
-            var workspace = new ConnectionWorkspace(() -> List.of(choice("a", "Produção"), choice("b", "Testing")), item -> {
+            var focused = new AtomicInteger();
+            var workspace = new ConnectionWorkspace(() -> List.of(choice("a", "Production")), item -> {
                 opened.add(item.id());
                 return new ConnectionWorkspace.View(new JTextField(), () -> {});
-            });
-            workspace.search.setText("PRODUCAO");
-            assertEquals(1, workspace.model.size());
+            }, focused::incrementAndGet);
             assertTrue(opened.isEmpty());
             assertNull(workspace.selectedId());
-            workspace.list.setSelectedIndex(0);
+            assertFalse(hasConnectionSelector(workspace));
+            findExplorerButton(workspace).doClick();
+            assertEquals(1, focused.get());
+            assertTrue(opened.isEmpty());
+            workspace.select("a");
             assertEquals(List.of("a"), opened);
-            assertEquals("a", workspace.selectedId());
             workspace.dispose();
         });
     }
 
-    @Test void switchingConnectionsRetainsEachExistingViewAndItsPendingChanges() throws Exception {
+    @Test void switchingNativeSelectionsRetainsEachViewAndItsPendingChanges() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             var created = new AtomicInteger();
             var workspace = new ConnectionWorkspace(() -> List.of(choice("a", "A"), choice("b", "B")), item -> {
@@ -44,14 +46,11 @@ class ConnectionWorkspaceTest {
             assertSame(original, workspace.currentView());
             assertEquals("pending review", original.getText());
             assertEquals(2, created.get());
-            workspace.search.setText("B");
-            assertEquals("a", workspace.selectedId());
-            assertSame(original, workspace.currentView());
             workspace.dispose();
         });
     }
 
-    @Test void removingAConnectionDisposesItsViewAndDoesNotSwitchToAnotherServer() throws Exception {
+    @Test void removingAConnectionDisposesItsViewAndNeverSelectsAnotherServer() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             var available = new AtomicReference<>(List.of(choice("a", "A"), choice("b", "B")));
             var disposed = new AtomicInteger();
@@ -64,5 +63,40 @@ class ConnectionWorkspaceTest {
             assertThrows(IllegalArgumentException.class, () -> workspace.select("a"));
             workspace.dispose();
         });
+    }
+
+    @Test void clearingTheNativeSelectionHidesTheTargetButKeepsItsPendingReview() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            var workspace = new ConnectionWorkspace(() -> List.of(choice("a", "A")), item -> new ConnectionWorkspace.View(new JTextField(), () -> {}));
+            workspace.select("a");
+            var original = (JTextField) workspace.currentView();
+            original.setText("pending");
+            workspace.select(null);
+            assertNull(workspace.selectedId());
+            assertNull(workspace.currentView());
+            workspace.select("a");
+            assertSame(original, workspace.currentView());
+            assertEquals("pending", original.getText());
+            workspace.dispose();
+        });
+    }
+
+    private static boolean hasConnectionSelector(java.awt.Container parent) {
+        for (var child : parent.getComponents()) {
+            if (child instanceof JList<?> || child instanceof JComboBox<?> || child instanceof JTextField) return true;
+            if (child instanceof java.awt.Container nested && hasConnectionSelector(nested)) return true;
+        }
+        return false;
+    }
+
+    private static JButton findExplorerButton(java.awt.Container parent) {
+        for (var child : parent.getComponents()) {
+            if (child instanceof JButton button) return button;
+            if (child instanceof java.awt.Container nested) {
+                var button = findExplorerButton(nested);
+                if (button != null) return button;
+            }
+        }
+        return null;
     }
 }

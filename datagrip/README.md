@@ -4,7 +4,7 @@ DataGrip plugin by **Lucas Passos** for managing MySQL/Aurora servers and buildi
 
 ## Server workspace
 
-Open Server Management from the Database Explorer toolbar or the context menu directly below Properties. The submenu provides Server Info, Processes and User Accounts shortcuts. Management uses one central editor tab with an inline, searchable connection list. Switching servers preserves each server's current page and pending account review. Filtering never opens a connection automatically. If the explorer and console point to different servers, choose explicitly.
+Open Server Management from the Database Explorer toolbar or the context menu directly below Properties. The submenu provides Server Info, Processes and User Accounts shortcuts. Management uses one central editor tab and the native Database Explorer as its only connection selector. There is no second connection list in the management view. While the management tab is selected, choosing a different MySQL/Aurora connection, schema or table in Database Explorer switches the central view to that server and preserves each server's pending review. The explorer selection takes priority over an open SQL console. With no valid target, the page directs you to Database Explorer. While a SQL editor is selected, explorer clicks do not activate management.
 
 The workspace has three pages: Overview, Processes and Users & Access. Overview reads server hostname, port, version, edition, current schema, authenticated account, connection ID, read-only state and connection limit. Processes reads SHOW FULL PROCESSLIST and supports local filtering and manual refresh. It does not kill sessions. Process visibility follows the authenticated account's server privileges, as documented in the [MySQL manual](https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html).
 
@@ -28,8 +28,8 @@ Refresh DataGrip introspection if tables or columns are missing. Identifiers are
 
 Target: DataGrip 2026.2.6.1, build 262.11879.103, Java 25, Gradle Wrapper 9.8.2 and IntelliJ Platform Gradle Plugin 2.19.0. The declared compatibility range is the 262 line starting at 262.11879.
 
-Run build.ps1 with optional LocalIdePath, JdkPath and ArtifactDirectory arguments. Tests, structural checks and packaging run before the script copies the exact current ZIP and SHA-256 to artifacts/datagrip in the main checkout, including when building from a worktree. That folder is Git-ignored. Current package: server-management-0.4.0.zip. Older install packages are archived.
+Run build.ps1 with optional LocalIdePath, JdkPath and ArtifactDirectory arguments. Tests, structural checks and packaging run before the script copies the exact current ZIP and SHA-256 to artifacts/datagrip in the main checkout, including when building from a worktree. That folder is Git-ignored. Current package: server-management-0.4.1.zip. Older install packages are archived.
 
 Install the ZIP without extracting it using Settings > Plugins > gear > Install Plugin from Disk, then restart when requested. The plugin ID remains io.github.lucasbp.datagrip-toolkit, so this updates the previous installation. The display name and vendor are Server Management and Lucas Passos. The package is not Marketplace-signed.
 
-The workflow tests, packages and verifies compatibility. A matching datagrip-v* tag publishes the installable ZIP and checksum as a prerelease asset. This 0.4.0 package is currently local; it has not been published to GitHub in this iteration. See [validation](docs/VALIDATION.md) for current evidence and limits.
+The workflow tests, packages and verifies compatibility. A matching datagrip-v* tag publishes the installable ZIP and checksum as a prerelease asset. This 0.4.1 package is currently local; it has not been published to GitHub in this iteration. See [validation](docs/VALIDATION.md) for current evidence and limits.

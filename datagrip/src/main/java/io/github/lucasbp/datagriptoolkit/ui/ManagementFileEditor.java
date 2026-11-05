@@ -65,7 +65,7 @@ final class ManagementFileEditor extends UserDataHolderBase implements FileEdito
             panel.add(tabs, BorderLayout.CENTER);
             panel.putClientProperty("management.tabs", tabs);
             return new ConnectionWorkspace.View(panel, () -> disposers.forEach(Runnable::run));
-        }, id -> ConnectionColors.color(project, id));
+        }, () -> project.getService(AccountManagerWindows.class).focusExplorer());
         workspace.onSelectionChanged(id -> {
             file.connectionId = id;
             com.intellij.openapi.fileEditor.FileEditorManager.getInstance(project).updateFileColor(file);
@@ -79,12 +79,11 @@ final class ManagementFileEditor extends UserDataHolderBase implements FileEdito
     }
     void selectConnection(String id) {
         workspace.refresh();
-        if (id == null) workspace.focusSearch();
-        else workspace.select(id);
+        workspace.select(id);
         file.connectionId = workspace.selectedId();
     }
     @Override public JComponent getComponent() { return workspace; }
-    @Override public JComponent getPreferredFocusedComponent() { return workspace.search; }
+    @Override public JComponent getPreferredFocusedComponent() { return workspace; }
     @Override public String getName() { return "Server Management"; }
     @Override public ManagementFile getFile() { return file; }
     @Override public void setState(FileEditorState state) {}
